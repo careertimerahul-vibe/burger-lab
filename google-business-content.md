@@ -16,7 +16,7 @@ What makes us different:
 
 Open daily 5 PM to 1 AM. Walk in, call, or WhatsApp your order. 
 
-Located at Shop C-29, Amrapali Golf Homes Market, Sector 4, Greater Noida — right inside the community.
+Located at The Burger Lab, Near Entry Gate No. 3, Besides Vegetable Shop, Amrapali Golf Homes Market, Sector 4, Greater Noida.
 
 
 ## ── GOOGLE Q&A (Seed these 6 questions) ──

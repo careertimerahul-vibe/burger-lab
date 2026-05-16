@@ -9,10 +9,12 @@
 ## Bio Template
 ```
 🍔 Gourmet Veg Burgers & Loaded Fries
-📍 Amrapali Golf Homes, Greater Noida
-⏰ Open Daily | 5PM – 1AM
-📞 WhatsApp: 9205491224
-🔗 Order / Menu / Location ↓
+ Amrapali Golf Homes, Greater Noida
+ Open Daily | 5PM  1AM
+ WhatsApp: 9205491224
+ Order / Menu / Location 
+
+_Landmark: Near Entry Gate No. 3, Besides Vegetable Shop_
 ```
 
 ## Link in Bio

@@ -91,6 +91,12 @@ The HTML file needs to be hosted somewhere. Options:
 
 ---
 
+## Address
+
+**The Burger Lab, Near Entry Gate No. 3, Besides Vegetable Shop, Amrapali Golf Homes Market, Sector 4, Greater Noida**
+
+---
+
 ## Google Posts Ideas (Post 1-2x per week on Google Business)
 
 1. "New on the menu: Paneer Garden Royale! Fresh paneer with garden veggies & our signature sauce. Try it tonight. 🍔"

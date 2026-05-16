@@ -17,7 +17,7 @@ Register with number: +91 9205491224
 - Category: Food & Beverage / Restaurant
 - Description: Gourmet veg burgers, sandwiches & loaded fries. Open daily 5PM-1AM at Amrapali Golf Homes, Greater Noida.
 - Hours: Mon-Sun 5:00 PM - 1:00 AM
-- Address: Shop C-29, Amrapali Golf Homes Market, Sector 4, Greater Noida
+- Address: The Burger Lab, Near Entry Gate No. 3, Besides Vegetable Shop, Amrapali Golf Homes Market, Sector 4, Greater Noida
 - Website: [your landing page URL]
 - Email: [your email]
 

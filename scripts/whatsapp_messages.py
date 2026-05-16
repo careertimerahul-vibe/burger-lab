@@ -10,9 +10,34 @@ Generates 3 ready-to-copy WhatsApp marketing messages based on:
 
 import subprocess
 import json
+import os
+import re
 from datetime import datetime, timezone, timedelta
 
 IST = timezone(timedelta(hours=5, minutes=30))
+
+# ── Load address from README (single source of truth) ──────────────────────
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_PROJECT_DIR = os.path.dirname(_SCRIPT_DIR)
+_README_PATH = os.path.join(_PROJECT_DIR, "README.md")
+
+def _load_address():
+    """Read the address line from README.md so it's always in sync."""
+    try:
+        with open(_README_PATH, "r") as f:
+            content = f.read()
+        # Match the line: **The Burger Lab, ...**
+        match = re.search(r"\*\*(The Burger Lab.+?)\*\*", content)
+        if match:
+            return match.group(1).strip()
+    except Exception:
+        pass
+    # Fallback
+    return "The Burger Lab, Near Entry Gate No. 3, Besides Vegetable Shop, Amrapali Golf Homes Market, Sector 4, Greater Noida"
+
+ADDRESS = _load_address()
+WHATSAPP = "9205491224"
+WA_LINK = "wa.me/919205491224"
 
 # Menu data for reference
 MENU_HIGHLIGHTS = {
@@ -201,13 +226,13 @@ def generate_messages():
 🍔 *{bestseller[0]}* — Just ₹{bestseller[1]}
 {pick(weather_data["emoji"])} {pick(weather_data["hooks"])}
 
-📍 Amrapali Golf Homes, Greater Noida
-📱 WhatsApp: 9205491224
-⏰ Open daily 5PM - 1AM
+{ADDRESS}
+WhatsApp: {WHATSAPP}
+ Open daily 5PM - 1AM
 
-👉 Reply with your order, we'll have it ready!{f"""
+ Reply with your order, we'll have it ready!{f"""
 
-🎉 *WEEKEND OFFER*: {pick(WEEKEND_OFFERS)}""" if weekend else ""}"""
+ *WEEKEND OFFER*: {pick(WEEKEND_OFFERS)}""" if weekend else ""}"""
 
     messages.append(("Hook + Bestseller", msg1))
 
@@ -221,8 +246,8 @@ def generate_messages():
 
 {f"🎉 *Weekend Bonus*: {pick(WEEKEND_OFFERS)}" if weekend else f"⏰ {time_str} — {weather_desc}, {temp}°C in Greater Noida"}
 
-📍 Shop C-29, Amrapali Golf Homes Market
-📲 Order now: wa.me/919205491224
+ Shop C-29, Amrapali Golf Homes Market, Near Entry Gate No. 3, Besides Vegetable Shop
+ Order now: wa.me/919205491224
 
 _The Burger Lab — Gourmet Veg Burgers & Loaded Fries_"""
 
@@ -243,10 +268,10 @@ Our Top 3 Bestsellers:
 
 {f"🎊 *THIS WEEKEND*: {pick(WEEKEND_OFFERS)}" if weekend else ""}
 
-📲 Tap to order → wa.me/919205491224
-📍 Amrapali Golf Homes, Sector 4, Greater Noida
+ Tap to order  wa.me/919205491224
+ The Burger Lab, Near Entry Gate No. 3, Besides Vegetable Shop, Amrapali Golf Homes, Sector 4, Greater Noida
 
-_Rate us on Google!_ ⭐"""
+_Rate us on Google!_ """
 
     messages.append(("Top 3 Bestsellers", msg3))
 
