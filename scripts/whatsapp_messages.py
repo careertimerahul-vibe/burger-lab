@@ -232,7 +232,9 @@ WhatsApp: {WHATSAPP}
 
  Reply with your order, we'll have it ready!{f"""
 
- *WEEKEND OFFER*: {pick(WEEKEND_OFFERS)}""" if weekend else ""}"""
+ *WEEKEND OFFER*: {pick(WEEKEND_OFFERS)}""" if weekend else ""}
+
+_Join our WhatsApp group for exclusive offers!_ https://chat.whatsapp.com/ITnN3ll8cBiIFnEQysWuLu"""
 
     messages.append(("Hook + Bestseller", msg1))
 
@@ -249,29 +251,29 @@ WhatsApp: {WHATSAPP}
  Shop C-29, Amrapali Golf Homes Market, Near Entry Gate No. 3, Besides Vegetable Shop
  Order now: wa.me/919205491224
 
-_The Burger Lab — Gourmet Veg Burgers & Loaded Fries_"""
+_The Burger Lab  Gourmet Veg Burgers & Loaded Fries_
+
+_Join our WhatsApp group for exclusive offers:_ https://chat.whatsapp.com/ITnN3ll8cBiIFnEQysWuLu"""
 
     messages.append(("Combo Deal", msg2))
 
     # Message 3: Fun/engagement style
     emoji_burger = pick(["🍔", "🌮", "🍟", "🤤", "🔥"])
-    msg3 = f"""{emoji_burger} *{date_str} | {time_str}*
-
-{pick(time_data["hooks"])}
+    msg3 = f"""{emoji_burger} {pick(time_data["hooks"])}
 
 Our Top 3 Bestsellers:
-1️⃣ Tandoori Paneer — ₹140
-2️⃣ Paneer Paradise — ₹100
-3️⃣ Fully Loaded Fries — ₹130
+1 Tandoori Paneer  140
+2 Paneer Paradise  100
+3 Fully Loaded Fries  130
 
 {pick(weather_data["emoji"])} {pick(weather_data["hooks"])}
 
-{f"🎊 *THIS WEEKEND*: {pick(WEEKEND_OFFERS)}" if weekend else ""}
+{f" *THIS WEEKEND*: {pick(WEEKEND_OFFERS)}" if weekend else ""}
 
  Tap to order  wa.me/919205491224
  The Burger Lab, Near Entry Gate No. 3, Besides Vegetable Shop, Amrapali Golf Homes, Sector 4, Greater Noida
 
-_Rate us on Google!_ """
+_Join our WhatsApp group for exclusive offers!_ https://chat.whatsapp.com/ITnN3ll8cBiIFnEQysWuLu """
 
     messages.append(("Top 3 Bestsellers", msg3))
 
@@ -287,8 +289,7 @@ _Rate us on Google!_ """
 def main():
     messages, context = generate_messages()
 
-    print(f"# Burger Lab — WhatsApp Messages")
-    print(f"**Generated:** {context['date']} at {context['time']} IST")
+    print(f"# Burger Lab  WhatsApp Messages")
     print(f"**Weather:** {context['weather']}")
     print(f"**Time of day:** {context['time_of_day']}")
     print(f"**Weekend:** {'Yes' if context['weekend'] else 'No'}")

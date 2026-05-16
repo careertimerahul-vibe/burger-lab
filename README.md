@@ -97,6 +97,19 @@ The HTML file needs to be hosted somewhere. Options:
 
 ---
 
+## WhatsApp Group
+
+**All marketing messages must include the WhatsApp group invite link:**
+https://chat.whatsapp.com/ITnN3ll8cBiIFnEQysWuLu
+
+Rules for messages:
+- Always invite people to join the WhatsApp group for exclusive offers
+- Never include "Rate us on Google" — use the group invite instead
+- Never include date/time stamps in the message body
+- Keep messages clean, vibey, and WhatsApp-friendly
+
+---
+
 ## Google Posts Ideas (Post 1-2x per week on Google Business)
 
 1. "New on the menu: Paneer Garden Royale! Fresh paneer with garden veggies & our signature sauce. Try it tonight. 🍔"
