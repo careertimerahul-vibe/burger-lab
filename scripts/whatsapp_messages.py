@@ -4,7 +4,7 @@ Burger Lab - WhatsApp Message Generator
 Generates 3 ready-to-copy WhatsApp marketing messages based on:
 - Current time of day
 - Weather in Greater Noida
-- Weekend offers
+- Weekend offers (day-aware: Saturday vs Sunday)
 - Mood/vibe variations
 """
 
@@ -12,11 +12,12 @@ import subprocess
 import json
 import os
 import re
+import random
 from datetime import datetime, timezone, timedelta
 
 IST = timezone(timedelta(hours=5, minutes=30))
 
-# ── Load address from README (single source of truth) ──────────────────────
+#  Load address from README (single source of truth) 
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 _PROJECT_DIR = os.path.dirname(_SCRIPT_DIR)
 _README_PATH = os.path.join(_PROJECT_DIR, "README.md")
@@ -61,25 +62,39 @@ MENU_HIGHLIGHTS = {
     ]
 }
 
-WEEKEND_OFFERS = [
-    "🎉 Weekend Special: Get a FREE Choco Lava Cake with any 2 burgers!",
-    "🔥 Saturday Deal: Tandoori Paneer + Loaded Fries + Coke @ just 270 (save 40!)",
-    "💥 Sunday Combo: Double Beast + Peri Peri Fries + Choco Lava @ just 250!",
-    "🌟 Weekend Bonanza: Order any 3 items, get the cheapest one FREE!",
-]
+# Day-aware weekend offers
+WEEKEND_OFFERS = {
+    "saturday": [
+        " Saturday Deal: Tandoori Paneer + Loaded Fries + Coke @ just 270 (save 40!)",
+        " Saturday Special: Get a FREE Choco Lava Cake with any 2 burgers!",
+        " Saturday Bonanza: Order any 3 items, get the cheapest one FREE!",
+        " Saturday Treat: Double Beast + Peri Peri Fries @ just 200!",
+    ],
+    "sunday": [
+        " Sunday Combo: Double Beast + Peri Peri Fries + Choco Lava @ just 250!",
+        " Sunday Special: Paneer Garden Royale + Loaded Fries @ just 240!",
+        " Sunday Bonanza: Order any 3 items, get the cheapest one FREE!",
+        " Sunday Deal: Tandoori Paneer + Loaded Fries + Coke @ just 270 (save 40!)",
+    ],
+    "generic": [
+        " Weekend Special: Get a FREE Choco Lava Cake with any 2 burgers!",
+        " Weekend Bonanza: Order any 3 items, get the cheapest one FREE!",
+        " Weekend Deal: Any 2 burgers + Fries @ just 300!",
+    ],
+}
 
 TIME_BASED = {
     "morning": {
-        "emoji": ["☀️", "🌅", "🍳"],
+        "emoji": ["", "", ""],
         "hooks": [
             "Start your day with a burger craving!",
             "Morning munchies? We've got you covered.",
-            "Who says burgers are only for dinner? 😏",
+            "Who says burgers are only for dinner? ",
         ],
         "vibe": "fresh and energetic"
     },
     "afternoon": {
-        "emoji": ["🔥", "🍔", "⚡"],
+        "emoji": ["", "", ""],
         "hooks": [
             "Lunch hour = Burger hour!",
             "Beat the heat with our spicy range!",
@@ -88,7 +103,7 @@ TIME_BASED = {
         "vibe": "bold and hungry"
     },
     "evening": {
-        "emoji": ["🌆", "😋", "🍟"],
+        "emoji": ["", "", ""],
         "hooks": [
             "Evening vibes + Burger Lab = Perfect combo!",
             "The sun's setting but our grills are just heating up!",
@@ -97,7 +112,7 @@ TIME_BASED = {
         "vibe": "warm and inviting"
     },
     "night": {
-        "emoji": ["🌙", "🌃", "🍔"],
+        "emoji": ["", "", ""],
         "hooks": [
             "Late night cravings? We're open till 1 AM!",
             "Midnight munchies? The Burger Lab has you covered!",
@@ -109,34 +124,34 @@ TIME_BASED = {
 
 WEATHER_BASED = {
     "hot": {
-        "emoji": ["🥤", "❄️", "🧊"],
+        "emoji": ["", "", ""],
         "hooks": [
-            "Beat the heat with our creamy range! Ice-cold drinks available 🧊",
+            "Beat the heat with our creamy range! Ice-cold drinks available ",
             "Too hot to cook? Grab a fresh burger instead!",
             "Stay cool with our Creamy Crispy + cold drink combo!",
         ]
     },
     "rain": {
-        "emoji": ["🌧️", "☔", "🍟"],
+        "emoji": ["", "", ""],
         "hooks": [
-            "Rainy day = Comfort food day! Loaded Fries + Hot Chocolate 🌧️",
+            "Rainy day = Comfort food day! Loaded Fries + Hot Chocolate ",
             "Monsoon cravings? Our Tandoori Paneer hits different in the rain!",
             "Stuck indoors? WhatsApp your order and enjoy cozy burgers at home!",
         ]
     },
     "cold": {
-        "emoji": ["🧣", "🔥", "☕"],
+        "emoji": ["", "", ""],
         "hooks": [
-            "Chilly evening? Warm up with our sizzling Tandoori Paneer! 🔥",
+            "Chilly evening? Warm up with our sizzling Tandoori Paneer! ",
             "Cold weather calls for hot, cheesy burgers!",
             "Winter special: Hot Choco Lava Cake + any burger = Pure bliss!",
         ]
     },
     "normal": {
-        "emoji": ["😋", "🍔", "🎉"],
+        "emoji": ["", "", ""],
         "hooks": [
             "Perfect weather for a perfect burger!",
-            "Great day to treat yourself! 🍔",
+            "Great day to treat yourself! ",
             "The Burger Lab is calling your name!",
         ]
     }
@@ -193,16 +208,28 @@ def is_weekend():
     return datetime.now(IST).weekday() >= 5
 
 
+def get_day_name():
+    """Return the current day name (e.g. 'Sunday')."""
+    return datetime.now(IST).strftime("%A")
+
+
+def get_weekend_offers():
+    """Return the appropriate weekend offer list based on actual day."""
+    day = datetime.now(IST).weekday()  # 5=Saturday, 6=Sunday
+    if day == 5:
+        return WEEKEND_OFFERS["saturday"]
+    elif day == 6:
+        return WEEKEND_OFFERS["sunday"]
+    return WEEKEND_OFFERS["generic"]
+
+
 def pick(items):
     """Pick a random item from a list."""
-    import random
     return random.choice(items)
 
 
 def generate_messages():
     """Generate 3 WhatsApp marketing messages."""
-    import random
-
     time_of_day = get_time_of_day()
     weather_type, weather_desc, temp = get_weather()
     weekend = is_weekend()
@@ -217,13 +244,17 @@ def generate_messages():
 
     date_str = now.strftime("%A, %d %B")
     time_str = now.strftime("%I:%M %p")
+    day_name = get_day_name()
+
+    # Pick weekend offers based on actual day
+    weekend_offer = pick(get_weekend_offers()) if weekend else None
 
     messages = []
 
     # Message 1: Hook + Bestseller + CTA
     msg1 = f"""{pick(time_data["emoji"])} {pick(time_data["hooks"])}
 
-🍔 *{bestseller[0]}* — Just ₹{bestseller[1]}
+ *{bestseller[0]}*  Just {bestseller[1]}
 {pick(weather_data["emoji"])} {pick(weather_data["hooks"])}
 
 {ADDRESS}
@@ -232,21 +263,21 @@ WhatsApp: {WHATSAPP}
 
  Reply with your order, we'll have it ready!{f"""
 
- *WEEKEND OFFER*: {pick(WEEKEND_OFFERS)}""" if weekend else ""}
+ *WEEKEND OFFER*: {weekend_offer}""" if weekend else ""}
 
 _Join our WhatsApp group for exclusive offers!_ https://chat.whatsapp.com/ITnN3ll8cBiIFnEQysWuLu"""
 
     messages.append(("Hook + Bestseller", msg1))
 
     # Message 2: Combo deal focus
-    msg2 = f"""{pick(time_data["emoji"])} *DEAL ALERT!* 🔥
+    msg2 = f"""{pick(time_data["emoji"])} *DEAL ALERT!* 
 
-💰 *{combo[0]}*
-   ➡️ Only ₹{combo[1]}!
+ *{combo[0]}*
+    Only {combo[1]}!
 
-🍟 Add {side[0]} for just ₹{side[1]}
+ Add {side[0]} for just {side[1]}
 
-{f"🎉 *Weekend Bonus*: {pick(WEEKEND_OFFERS)}" if weekend else f"⏰ {time_str} — {weather_desc}, {temp}°C in Greater Noida"}
+{f" *Weekend Bonus*: {weekend_offer}" if weekend else f" {time_str}  {weather_desc}, {temp}C in Greater Noida"}
 
  Shop C-29, Amrapali Golf Homes Market, Near Entry Gate No. 3, Besides Vegetable Shop
  Order now: wa.me/919205491224
@@ -258,7 +289,7 @@ _Join our WhatsApp group for exclusive offers:_ https://chat.whatsapp.com/ITnN3l
     messages.append(("Combo Deal", msg2))
 
     # Message 3: Fun/engagement style
-    emoji_burger = pick(["🍔", "🌮", "🍟", "🤤", "🔥"])
+    emoji_burger = pick(["", "", "", "", ""])
     msg3 = f"""{emoji_burger} {pick(time_data["hooks"])}
 
 Our Top 3 Bestsellers:
@@ -268,7 +299,7 @@ Our Top 3 Bestsellers:
 
 {pick(weather_data["emoji"])} {pick(weather_data["hooks"])}
 
-{f" *THIS WEEKEND*: {pick(WEEKEND_OFFERS)}" if weekend else ""}
+{f" *THIS WEEKEND*: {weekend_offer}" if weekend else ""}
 
  Tap to order  wa.me/919205491224
  The Burger Lab, Near Entry Gate No. 3, Besides Vegetable Shop, Amrapali Golf Homes, Sector 4, Greater Noida
@@ -279,8 +310,9 @@ _Join our WhatsApp group for exclusive offers!_ https://chat.whatsapp.com/ITnN3l
 
     return messages, {
         "time_of_day": time_of_day,
-        "weather": f"{weather_desc}, {temp}°C",
+        "weather": f"{weather_desc}, {temp}C",
         "weekend": weekend,
+        "day": day_name,
         "date": date_str,
         "time": time_str,
     }
@@ -290,6 +322,7 @@ def main():
     messages, context = generate_messages()
 
     print(f"# Burger Lab  WhatsApp Messages")
+    print(f"**Day:** {context['day']}")
     print(f"**Weather:** {context['weather']}")
     print(f"**Time of day:** {context['time_of_day']}")
     print(f"**Weekend:** {'Yes' if context['weekend'] else 'No'}")
