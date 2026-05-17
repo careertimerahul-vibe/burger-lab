@@ -95,6 +95,12 @@ def main():
                 {"name": "Double Beast Burger", "price": 120},
                 {"name": "Paneer Garden Royale", "price": 130},
             ],
+            "air_fried": [
+                {"name": "Air Fried Paneer Burger", "price": 110, "tag": "healthier option"},
+                {"name": "Air Fried Veggie Burger", "price": 90, "tag": "healthier option"},
+                {"name": "Air Fried Peri Peri Fries", "price": 80, "tag": "healthier option"},
+                {"name": "Air Fried Cheesy Bites", "price": 70, "tag": "healthier option"},
+            ],
             "combos": [
                 {"name": "Jalapeno Inferno + Peri Peri Fries", "price": 180},
                 {"name": "Paneer Paradise + Jalapeno Inferno + Fries", "price": 220},
@@ -107,6 +113,8 @@ def main():
                 {"name": "Choco Lava Cake", "price": 70},
             ],
         },
+        "air_fried_available": true,
+        "air_fried_note": "We serve Air Fried options — same great taste, less oil. Perfect for health-conscious foodies.",
     }
 
     print(json.dumps(context, indent=2))
