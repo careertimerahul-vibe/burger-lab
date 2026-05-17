@@ -1,167 +1,37 @@
 #!/usr/bin/env python3
 """
-Burger Lab - WhatsApp Message Generator
-Generates 3 ready-to-copy WhatsApp marketing messages based on:
-- Current time of day
-- Weather in Greater Noida
-- Weekend offers (day-aware: Saturday vs Sunday)
-- Mood/vibe variations
+Burger Lab - Context Feed for WhatsApp Message Generator
+Outputs current context (weather, time, day, menu) as JSON for the LLM cron agent.
+The agent uses this data to write creative, fun, pun-filled WhatsApp messages.
 """
 
 import subprocess
 import json
 import os
 import re
-import random
 from datetime import datetime, timezone, timedelta
 
 IST = timezone(timedelta(hours=5, minutes=30))
 
-#  Load address from README (single source of truth) 
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 _PROJECT_DIR = os.path.dirname(_SCRIPT_DIR)
 _README_PATH = os.path.join(_PROJECT_DIR, "README.md")
 
+
 def _load_address():
-    """Read the address line from README.md so it's always in sync."""
     try:
         with open(_README_PATH, "r") as f:
             content = f.read()
-        # Match the line: **The Burger Lab, ...**
         match = re.search(r"\*\*(The Burger Lab.+?)\*\*", content)
         if match:
             return match.group(1).strip()
     except Exception:
         pass
-    # Fallback
     return "The Burger Lab, Near Entry Gate No. 3, Besides Vegetable Shop, Amrapali Golf Homes Market, Sector 4, Greater Noida"
-
-ADDRESS = _load_address()
-WHATSAPP = "9205491224"
-WA_LINK = "wa.me/919205491224"
-
-# Menu data for reference
-MENU_HIGHLIGHTS = {
-    "bestsellers": [
-        ("Tandoori Paneer Burger", 140),
-        ("Paneer Paradise Burger", 100),
-        ("Fully Loaded Fries", 130),
-        ("Double Beast Burger", 120),
-        ("Paneer Garden Royale", 130),
-    ],
-    "combos": [
-        ("Jalapeno Inferno + Peri Peri Fries", 180),
-        ("Paneer Paradise + Jalapeno Inferno + Fries", 220),
-        ("Paneer Garden Royale + Loaded Fries", 240),
-        ("Tandoori Paneer + Loaded Fries + Coke", 270),
-    ],
-    "sides": [
-        ("Peri Peri Fries (L)", 110),
-        ("Cheesy Fries", 100),
-        ("Choco Lava Cake", 70),
-    ]
-}
-
-# Day-aware weekend offers
-WEEKEND_OFFERS = {
-    "saturday": [
-        " Saturday Deal: Tandoori Paneer + Loaded Fries + Coke @ just 270 (save 40!)",
-        " Saturday Special: Get a FREE Choco Lava Cake with any 2 burgers!",
-        " Saturday Bonanza: Order any 3 items, get the cheapest one FREE!",
-        " Saturday Treat: Double Beast + Peri Peri Fries @ just 200!",
-    ],
-    "sunday": [
-        " Sunday Combo: Double Beast + Peri Peri Fries + Choco Lava @ just 250!",
-        " Sunday Special: Paneer Garden Royale + Loaded Fries @ just 240!",
-        " Sunday Bonanza: Order any 3 items, get the cheapest one FREE!",
-        " Sunday Deal: Tandoori Paneer + Loaded Fries + Coke @ just 270 (save 40!)",
-    ],
-    "generic": [
-        " Weekend Special: Get a FREE Choco Lava Cake with any 2 burgers!",
-        " Weekend Bonanza: Order any 3 items, get the cheapest one FREE!",
-        " Weekend Deal: Any 2 burgers + Fries @ just 300!",
-    ],
-}
-
-TIME_BASED = {
-    "morning": {
-        "emoji": ["", "", ""],
-        "hooks": [
-            "Start your day with a burger craving!",
-            "Morning munchies? We've got you covered.",
-            "Who says burgers are only for dinner? ",
-        ],
-        "vibe": "fresh and energetic"
-    },
-    "afternoon": {
-        "emoji": ["", "", ""],
-        "hooks": [
-            "Lunch hour = Burger hour!",
-            "Beat the heat with our spicy range!",
-            "Afternoon cravings hitting different today?",
-        ],
-        "vibe": "bold and hungry"
-    },
-    "evening": {
-        "emoji": ["", "", ""],
-        "hooks": [
-            "Evening vibes + Burger Lab = Perfect combo!",
-            "The sun's setting but our grills are just heating up!",
-            "Dinner plans? We've got the best burgers in town!",
-        ],
-        "vibe": "warm and inviting"
-    },
-    "night": {
-        "emoji": ["", "", ""],
-        "hooks": [
-            "Late night cravings? We're open till 1 AM!",
-            "Midnight munchies? The Burger Lab has you covered!",
-            "Can't sleep? Come grab a burger! We're open late!",
-        ],
-        "vibe": "fun and chill"
-    }
-}
-
-WEATHER_BASED = {
-    "hot": {
-        "emoji": ["", "", ""],
-        "hooks": [
-            "Beat the heat with our creamy range! Ice-cold drinks available ",
-            "Too hot to cook? Grab a fresh burger instead!",
-            "Stay cool with our Creamy Crispy + cold drink combo!",
-        ]
-    },
-    "rain": {
-        "emoji": ["", "", ""],
-        "hooks": [
-            "Rainy day = Comfort food day! Loaded Fries + Hot Chocolate ",
-            "Monsoon cravings? Our Tandoori Paneer hits different in the rain!",
-            "Stuck indoors? WhatsApp your order and enjoy cozy burgers at home!",
-        ]
-    },
-    "cold": {
-        "emoji": ["", "", ""],
-        "hooks": [
-            "Chilly evening? Warm up with our sizzling Tandoori Paneer! ",
-            "Cold weather calls for hot, cheesy burgers!",
-            "Winter special: Hot Choco Lava Cake + any burger = Pure bliss!",
-        ]
-    },
-    "normal": {
-        "emoji": ["", "", ""],
-        "hooks": [
-            "Perfect weather for a perfect burger!",
-            "Great day to treat yourself! ",
-            "The Burger Lab is calling your name!",
-        ]
-    }
-}
 
 
 def get_time_of_day():
-    """Get current time of day category in IST."""
-    now = datetime.now(IST)
-    hour = now.hour
+    hour = datetime.now(IST).hour
     if 5 <= hour < 12:
         return "morning"
     elif 12 <= hour < 17:
@@ -173,7 +43,6 @@ def get_time_of_day():
 
 
 def get_weather():
-    """Fetch current weather for Greater Noida."""
     try:
         result = subprocess.run(
             ["curl", "-s", "https://wttr.in/Greater+Noida?format=%C+%t+%h+%w&lang=en"],
@@ -189,151 +58,58 @@ def get_weather():
                 except ValueError:
                     temp = 30
 
-                # Categorize weather
                 if "rain" in condition or "drizzle" in condition or "shower" in condition:
-                    return "rain", condition, temp
+                    return {"type": "rain", "desc": condition, "temp": temp}
                 elif "snow" in condition or "frost" in condition or temp < 15:
-                    return "cold", condition, temp
+                    return {"type": "cold", "desc": condition, "temp": temp}
                 elif temp > 35 or "sunny" in condition or "clear" in condition:
-                    return "hot", condition, temp
+                    return {"type": "hot", "desc": condition, "temp": temp}
                 else:
-                    return "normal", condition, temp
+                    return {"type": "normal", "desc": condition, "temp": temp}
     except Exception:
         pass
-    return "normal", "clear", 30
-
-
-def is_weekend():
-    """Check if today is weekend (Saturday=5, Sunday=6)."""
-    return datetime.now(IST).weekday() >= 5
-
-
-def get_day_name():
-    """Return the current day name (e.g. 'Sunday')."""
-    return datetime.now(IST).strftime("%A")
-
-
-def get_weekend_offers():
-    """Return the appropriate weekend offer list based on actual day."""
-    day = datetime.now(IST).weekday()  # 5=Saturday, 6=Sunday
-    if day == 5:
-        return WEEKEND_OFFERS["saturday"]
-    elif day == 6:
-        return WEEKEND_OFFERS["sunday"]
-    return WEEKEND_OFFERS["generic"]
-
-
-def pick(items):
-    """Pick a random item from a list."""
-    return random.choice(items)
-
-
-def generate_messages():
-    """Generate 3 WhatsApp marketing messages."""
-    time_of_day = get_time_of_day()
-    weather_type, weather_desc, temp = get_weather()
-    weekend = is_weekend()
-    now = datetime.now(IST)
-
-    time_data = TIME_BASED[time_of_day]
-    weather_data = WEATHER_BASED[weather_type]
-
-    bestseller = pick(MENU_HIGHLIGHTS["bestsellers"])
-    combo = pick(MENU_HIGHLIGHTS["combos"])
-    side = pick(MENU_HIGHLIGHTS["sides"])
-
-    date_str = now.strftime("%A, %d %B")
-    time_str = now.strftime("%I:%M %p")
-    day_name = get_day_name()
-
-    # Pick weekend offers based on actual day
-    weekend_offer = pick(get_weekend_offers()) if weekend else None
-
-    messages = []
-
-    # Message 1: Hook + Bestseller + CTA
-    msg1 = f"""{pick(time_data["emoji"])} {pick(time_data["hooks"])}
-
- *{bestseller[0]}*  Just {bestseller[1]}
-{pick(weather_data["emoji"])} {pick(weather_data["hooks"])}
-
-{ADDRESS}
-WhatsApp: {WHATSAPP}
- Open daily 5PM - 1AM
-
- Reply with your order, we'll have it ready!{f"""
-
- *WEEKEND OFFER*: {weekend_offer}""" if weekend else ""}
-
-_Join our WhatsApp group for exclusive offers!_ https://chat.whatsapp.com/ITnN3ll8cBiIFnEQysWuLu"""
-
-    messages.append(("Hook + Bestseller", msg1))
-
-    # Message 2: Combo deal focus
-    msg2 = f"""{pick(time_data["emoji"])} *DEAL ALERT!* 
-
- *{combo[0]}*
-    Only {combo[1]}!
-
- Add {side[0]} for just {side[1]}
-
-{f" *Weekend Bonus*: {weekend_offer}" if weekend else f" {time_str}  {weather_desc}, {temp}C in Greater Noida"}
-
- Shop C-29, Amrapali Golf Homes Market, Near Entry Gate No. 3, Besides Vegetable Shop
- Order now: wa.me/919205491224
-
-_The Burger Lab  Gourmet Veg Burgers & Loaded Fries_
-
-_Join our WhatsApp group for exclusive offers:_ https://chat.whatsapp.com/ITnN3ll8cBiIFnEQysWuLu"""
-
-    messages.append(("Combo Deal", msg2))
-
-    # Message 3: Fun/engagement style
-    emoji_burger = pick(["", "", "", "", ""])
-    msg3 = f"""{emoji_burger} {pick(time_data["hooks"])}
-
-Our Top 3 Bestsellers:
-1 Tandoori Paneer  140
-2 Paneer Paradise  100
-3 Fully Loaded Fries  130
-
-{pick(weather_data["emoji"])} {pick(weather_data["hooks"])}
-
-{f" *THIS WEEKEND*: {weekend_offer}" if weekend else ""}
-
- Tap to order  wa.me/919205491224
- The Burger Lab, Near Entry Gate No. 3, Besides Vegetable Shop, Amrapali Golf Homes, Sector 4, Greater Noida
-
-_Join our WhatsApp group for exclusive offers!_ https://chat.whatsapp.com/ITnN3ll8cBiIFnEQysWuLu """
-
-    messages.append(("Top 3 Bestsellers", msg3))
-
-    return messages, {
-        "time_of_day": time_of_day,
-        "weather": f"{weather_desc}, {temp}C",
-        "weekend": weekend,
-        "day": day_name,
-        "date": date_str,
-        "time": time_str,
-    }
+    return {"type": "normal", "desc": "clear", "temp": 30}
 
 
 def main():
-    messages, context = generate_messages()
+    now = datetime.now(IST)
+    weather = get_weather()
 
-    print(f"# Burger Lab  WhatsApp Messages")
-    print(f"**Day:** {context['day']}")
-    print(f"**Weather:** {context['weather']}")
-    print(f"**Time of day:** {context['time_of_day']}")
-    print(f"**Weekend:** {'Yes' if context['weekend'] else 'No'}")
-    print(f"\n---\n")
+    context = {
+        "day": now.strftime("%A"),
+        "date": now.strftime("%d %B"),
+        "time_ist": now.strftime("%I:%M %p"),
+        "time_of_day": get_time_of_day(),
+        "is_weekend": now.weekday() >= 5,
+        "weather": weather,
+        "address": _load_address(),
+        "whatsapp": "9205491224",
+        "wa_link": "wa.me/919205491224",
+        "whatsapp_group": "https://chat.whatsapp.com/ITnN3ll8cBiIFnEQysWuLu",
+        "business_hours": "5 PM - 1 AM",
+        "menu": {
+            "bestsellers": [
+                {"name": "Tandoori Paneer Burger", "price": 140},
+                {"name": "Paneer Paradise Burger", "price": 100},
+                {"name": "Fully Loaded Fries", "price": 130},
+                {"name": "Double Beast Burger", "price": 120},
+                {"name": "Paneer Garden Royale", "price": 130},
+            ],
+            "combos": [
+                {"name": "Jalapeno Inferno + Peri Peri Fries", "price": 180},
+                {"name": "Paneer Paradise + Jalapeno Inferno + Fries", "price": 220},
+                {"name": "Paneer Garden Royale + Loaded Fries", "price": 240},
+                {"name": "Tandoori Paneer + Loaded Fries + Coke", "price": 270},
+            ],
+            "sides": [
+                {"name": "Peri Peri Fries (Large)", "price": 110},
+                {"name": "Cheesy Fries", "price": 100},
+                {"name": "Choco Lava Cake", "price": 70},
+            ],
+        },
+    }
 
-    for i, (label, msg) in enumerate(messages, 1):
-        print(f"## Message {i}: {label}\n")
-        print("```")
-        print(msg)
-        print("```")
-        print(f"\n---\n")
+    print(json.dumps(context, indent=2))
 
 
 if __name__ == "__main__":
