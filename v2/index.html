@@ -178,6 +178,21 @@
   }
   .bc-add:hover{box-shadow:0 2px 12px rgba(255,92,40,0.3)}
   .bc-add:active{transform:scale(.95)}
+  .bc-add.qty-mode{
+    display:inline-flex;align-items:center;justify-content:center;
+    gap:2px;padding:4px 10px;background:var(--surface2);
+    color:var(--text);border:1px solid var(--border);
+  }
+  .mqty-btn{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:24px;height:24px;border-radius:5px;font-size:15px;font-weight:700;
+    background:rgba(255,255,255,0.08);color:var(--text);
+    border:none;cursor:pointer;line-height:1;
+  }
+  .mqty-btn:active{background:var(--accent);color:#fff}
+  .mqty-num{
+    font-size:13px;font-weight:700;min-width:20px;text-align:center;color:#fff;
+  }
 
   /* ── Side items (flat) ── */
   .side-item{
@@ -760,8 +775,8 @@ var Cart = {
     this._countEl.textContent = c + " item" + (c !== 1 ? "s" : "");
     this._totalEl.textContent = "₹" + t;
     this._bar.classList.toggle("hidden", c === 0);
-    // Update panel
     if (this._overlay.classList.contains("open")) this._renderPanel();
+    this._updateMenuButtons();
   },
 
   _renderPanel: function() {
@@ -810,6 +825,38 @@ var Cart = {
     el.textContent = text;
     document.body.appendChild(el);
     setTimeout(function() { el.remove(); }, 700);
+  },
+
+  _updateMenuButtons: function() {
+    var self = this;
+    var cartMap = {};
+    this.items.forEach(function(i) { cartMap[i.key] = i.qty; });
+
+    document.querySelectorAll('[data-menu-key]').forEach(function(btn) {
+      var key = btn.getAttribute('data-menu-key');
+      var qty = cartMap[key] || 0;
+      var inQtyMode = btn.hasAttribute('data-qty-mode');
+
+      if (!btn.getAttribute('data-orig-label')) {
+        btn.setAttribute('data-orig-label', btn.textContent.trim());
+      }
+
+      if (qty > 0) {
+        if (!inQtyMode) {
+          btn.setAttribute('data-qty-mode', '1');
+          btn.style.width = '';
+          btn.classList.add('qty-mode');
+        }
+        var escKey = key.replace(/'/g, "\\'");
+        btn.innerHTML = '<span class="mqty-btn" onclick="event.stopPropagation();Cart.changeQty(\'' + escKey + '\',-1)">−</span>' +
+          '<span class="mqty-num">' + qty + '</span>' +
+          '<span class="mqty-btn" onclick="event.stopPropagation();Cart.changeQty(\'' + escKey + '\',1)">+</span>';
+      } else if (inQtyMode) {
+        btn.removeAttribute('data-qty-mode');
+        btn.classList.remove('qty-mode');
+        btn.textContent = btn.getAttribute('data-orig-label');
+      }
+    });
   }
 };
 
@@ -889,7 +936,7 @@ var Checkout = {
             it.includes.forEach(function(inc) { menuOut += '<span class="combo-include-tag">'+inc+'</span>'; });
             menuOut += '</div>';
           }
-          menuOut += '<button class="bc-add" onclick="Cart.add(\''+it.name+'\',\'Combo\','+it.price+')" style="width:100%;text-align:center;padding:10px">Add — ₹'+it.price+'</button>';
+          menuOut += '<button class="bc-add" data-menu-key="'+it.name+'|||Combo" onclick="Cart.add(\''+it.name+'\',\'Combo\','+it.price+')" style="width:100%;text-align:center;padding:10px">Add — ₹'+it.price+'</button>';
           menuOut += '</div>';
         } else if (cat.pricing === "flat") {
           menuOut += '<div class="side-item">';
@@ -901,7 +948,7 @@ var Checkout = {
           menuOut += '</div>';
           menuOut += '<span class="side-item-price">₹'+it.price+'</span>';
           var variant = it.size ? it.size : "Regular";
-          menuOut += '<button class="bc-add" onclick="Cart.add(\''+it.name+'\',\''+variant+'\','+it.price+')">Add</button>';
+          menuOut += '<button class="bc-add" data-menu-key="'+it.name+'|||'+variant+'" onclick="Cart.add(\''+it.name+'\',\''+variant+'\','+it.price+')">Add</button>';
           menuOut += '</div>';
         } else {
           // base-cheese pricing
@@ -915,14 +962,14 @@ var Checkout = {
           menuOut += '<div class="bc-price-col'+(it.cheese === null ? ' single' : '')+'">';
           menuOut += '<span class="bc-price-label">Regular</span>';
           menuOut += '<span class="bc-price-val">₹'+it.base+'</span>';
-          menuOut += '<button class="bc-add" onclick="Cart.add(\''+it.name+'\',\'Regular\','+it.base+')">Add</button>';
+          menuOut += '<button class="bc-add" data-menu-key="'+it.name+'|||Regular" onclick="Cart.add(\''+it.name+'\',\'Regular\','+it.base+')">Add</button>';
           menuOut += '</div>';
           // cheese
           if (it.cheese !== null) {
             menuOut += '<div class="bc-price-col">';
             menuOut += '<span class="bc-price-label">With Cheese</span>';
             menuOut += '<span class="bc-price-val">₹'+it.cheese+'</span>';
-            menuOut += '<button class="bc-add" onclick="Cart.add(\''+it.name+'\',\'With Cheese\','+it.cheese+')">Add</button>';
+            menuOut += '<button class="bc-add" data-menu-key="'+it.name+'|||With Cheese" onclick="Cart.add(\''+it.name+'\',\'With Cheese\','+it.cheese+')">Add</button>';
             menuOut += '</div>';
           }
           menuOut += '</div>';
