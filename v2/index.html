@@ -368,6 +368,64 @@
     100%{opacity:0;transform:translateX(-50%) translateY(-10px)}
   }
 
+  /* ═══ Checkout Modal ═══ */
+  .checkout-overlay{
+    position:fixed;inset:0;z-index:250;background:rgba(0,0,0,0.7);
+    display:none;align-items:center;justify-content:center;
+    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  }
+  .checkout-overlay.open{display:flex}
+  .checkout-panel{
+    background:var(--surface);width:90%;max-width:440px;
+    border-radius:var(--radius);overflow:hidden;
+    border:1px solid var(--border);
+  }
+  .checkout-header{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:18px 20px;border-bottom:1px solid var(--border);
+  }
+  .checkout-header h3{font-size:16px;font-weight:700}
+  .checkout-close{
+    background:none;border:none;color:var(--text-muted);
+    font-size:22px;cursor:pointer;padding:4px 8px;
+  }
+  .checkout-body{padding:20px}
+  .checkout-field{margin-bottom:16px}
+  .checkout-field label{
+    display:block;font-size:12px;font-weight:600;color:var(--text-muted);
+    text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;
+  }
+  .checkout-field input, .checkout-field select{
+    width:100%;padding:12px 14px;border-radius:var(--radius-sm);
+    background:var(--bg);border:1.5px solid var(--border);
+    color:var(--text);font-size:14px;font-family:inherit;
+    transition:border-color .15s;outline:none;
+  }
+  .checkout-field input:focus, .checkout-field select:focus{
+    border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,92,40,0.1);
+  }
+  .checkout-field select{appearance:none;cursor:pointer;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='%238a8a80'%3E%3Cpath d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;
+  }
+  .checkout-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .checkout-submit{
+    width:100%;margin-top:8px;
+    background:var(--green);color:#fff;border:none;
+    padding:14px;border-radius:100px;font-size:15px;font-weight:700;
+    cursor:pointer;box-shadow:0 2px 12px rgba(46,204,113,0.25);
+    transition:all .15s;
+  }
+  .checkout-submit:hover{box-shadow:0 4px 20px rgba(46,204,113,0.4)}
+  .checkout-submit:active{transform:scale(.97)}
+  .checkout-summary{
+    background:var(--bg);border-radius:var(--radius-sm);
+    padding:14px 16px;margin-bottom:18px;
+    display:flex;justify-content:space-between;align-items:center;
+    font-size:14px;font-weight:600;
+  }
+  .checkout-summary .cs-total{color:var(--accent);font-weight:800;font-size:18px}
+
   /* ═══ Responsive ═══ */
   @media(max-width:400px){
     .hero h1{font-size:30px}
@@ -376,6 +434,8 @@
     .cart-bar{padding:10px 16px}
     .cart-confirm{padding:8px 16px;font-size:12px}
     .cart-total{font-size:16px}
+    .checkout-panel{width:94%}
+    .checkout-row{grid-template-columns:1fr}
   }
 </style>
 </head>
@@ -512,6 +572,43 @@
     <div class="cart-panel-footer">
       <span class="cart-panel-total" id="cart-panel-total">Total: ₹0</span>
       <button class="cart-panel-order" onclick="Cart.order()">Order on WhatsApp →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CHECKOUT MODAL ═══ -->
+<div class="checkout-overlay" id="checkout-overlay" onclick="if(event.target===this)Checkout.close()">
+  <div class="checkout-panel">
+    <div class="checkout-header">
+      <h3>📍 Delivery Details</h3>
+      <button class="checkout-close" onclick="Checkout.close()">✕</button>
+    </div>
+    <div class="checkout-body">
+      <div class="checkout-summary">
+        <span id="checkout-item-count">0 items</span>
+        <span class="cs-total" id="checkout-total">₹0</span>
+      </div>
+      <div class="checkout-row">
+        <div class="checkout-field">
+          <label>Tower Number</label>
+          <input type="text" id="chk-tower" placeholder="e.g. T-4" autocomplete="off">
+        </div>
+        <div class="checkout-field">
+          <label>Flat Number</label>
+          <input type="text" id="chk-flat" placeholder="e.g. 302" autocomplete="off">
+        </div>
+      </div>
+      <div class="checkout-field">
+        <label>🌶️ Spice Preference</label>
+        <select id="chk-spice">
+          <option value="">Select spice level</option>
+          <option value="Low">Low 🌶️</option>
+          <option value="Medium">Medium 🌶️🌶️</option>
+          <option value="High">High 🌶️🌶️🌶️</option>
+          <option value="Ultra High">Ultra High 🌶️🌶️🌶️🌶️</option>
+        </select>
+      </div>
+      <button class="checkout-submit" onclick="Checkout.submit()">Place Order on WhatsApp →</button>
     </div>
   </div>
 </div>
@@ -704,13 +801,7 @@ var Cart = {
 
   order: function() {
     if (this.items.length === 0) return;
-    var msg = "Hey Burger Lab, I would like to place an order:\n\n";
-    this.items.forEach(function(item) {
-      msg += "• " + item.name + " (" + item.variant + ") x" + item.qty + " — ₹" + (item.price * item.qty) + "\n";
-    });
-    msg += "\nTotal: ₹" + this.total();
-    var url = "https://wa.me/91" + D.whatsapp + "?text=" + encodeURIComponent(msg);
-    window.open(url, "_blank");
+    Checkout.open();
   },
 
   _flash: function(text) {
@@ -722,11 +813,56 @@ var Cart = {
   }
 };
 
+// ═══ CHECKOUT ═══
+var Checkout = {
+  _overlay: null,
+
+  init: function() {
+    this._overlay = document.getElementById("checkout-overlay");
+  },
+
+  open: function() {
+    document.getElementById("checkout-item-count").textContent = Cart.count() + " item" + (Cart.count() !== 1 ? "s" : "");
+    document.getElementById("checkout-total").textContent = "₹" + Cart.total();
+    this._overlay.classList.add("open");
+  },
+
+  close: function() {
+    this._overlay.classList.remove("open");
+  },
+
+  submit: function() {
+    var tower = document.getElementById("chk-tower").value.trim();
+    var flat = document.getElementById("chk-flat").value.trim();
+    var spice = document.getElementById("chk-spice").value;
+
+    var msg = "Hey Burger Lab, I would like to place an order:\n\n";
+    Cart.items.forEach(function(item) {
+      msg += "• " + item.name + " (" + item.variant + ") x" + item.qty + " — ₹" + (item.price * item.qty) + "\n";
+    });
+    msg += "\nTotal: ₹" + Cart.total();
+
+    if (tower || flat) {
+      msg += "\n\n📍 Delivery Address:";
+      if (tower) msg += "\n   Tower: " + tower;
+      if (flat) msg += "\n   Flat: " + flat;
+    }
+    if (spice) {
+      msg += "\n\n🌶️ Spice Preference: " + spice;
+    }
+
+    this.close();
+    var url = "https://wa.me/91" + D.whatsapp + "?text=" + encodeURIComponent(msg);
+    window.open(url, "_blank");
+  }
+};
+
 // ═══ RENDER ═══
 (function() {
   Cart.init();
   Cart._load();
   Cart._update();
+  Checkout.init();
 
   // menu
   var menuOut = "";
