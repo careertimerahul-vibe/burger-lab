@@ -1,5 +1,5 @@
 // Netlify Function — proxies API calls to the Burger Lab POS backend
-const API_URL = "http://srv1115160.hstgr.cloud:8901";
+const API_URL = "https://collins-passing-marriage-logistics.trycloudflare.com";
 const API_KEY = "burgerlab_pos_2024";
 
 export default async function handler(req) {
