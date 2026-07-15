@@ -898,7 +898,7 @@ var Checkout = {
       msg += "\n\n🌶️ Spice Preference: " + spice;
     }
 
-    // Auto-save to POS database
+    // Auto-save to POS backend
     var totalSell = Cart.total();
     var items = Cart.items.map(function(i) {
       return { name: i.name + " (" + i.variant + ")", qty: i.qty, sellPrice: i.price, costPrice: 0 };
@@ -914,7 +914,12 @@ var Checkout = {
       delivery: { tower: tower, flat: flat },
       spice: spice
     };
-    saveOrderToPOS(order);
+    // Fire-and-forget — don't block WhatsApp open
+    fetch("/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(order)
+    }).catch(function() {});
 
     this.close();
     var url = "https://wa.me/91" + D.whatsapp + "?text=" + encodeURIComponent(msg);
@@ -1022,24 +1027,6 @@ var Checkout = {
   }, {passive: true});
 
 })();
-
-// ═══ POS Integration — save orders to shared IndexedDB ═══
-function saveOrderToPOS(orderData) {
-  var request = indexedDB.open("BurgerLabPOS", 1);
-  request.onupgradeneeded = function(e) {
-    var db = e.target.result;
-    if (!db.objectStoreNames.contains("orders")) {
-      var store = db.createObjectStore("orders", { keyPath: "id", autoIncrement: true });
-      store.createIndex("timestamp", "timestamp");
-    }
-    if (!db.objectStoreNames.contains("menu")) {
-      db.createObjectStore("menu", { keyPath: "id", autoIncrement: true });
-    }
-  };
-  request.onsuccess = function(e) {
-    e.target.result.transaction("orders", "readwrite").objectStore("orders").add(orderData);
-  };
-}
 </script>
 </body>
 </html>
