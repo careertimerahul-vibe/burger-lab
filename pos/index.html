@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Burger Lab POS</title>
+<script src="https://unpkg.com/dexie@3.2.4/dist/dexie.js"></script>
+<style>
+:root{--bg:#0a0a0c;--surface:#131316;--surface2:#1c1c20;--border:#26262b;--text:#eeeee8;--text-muted:#8a8a80;--accent:#ff5c28;--green:#2ecc71;--red:#e74c3c;--yellow:#f39c12;--radius:12px;--radius-sm:8px}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+::selection{background:var(--accent);color:#fff}
+
+/* Login */
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:32px 24px;width:100%;max-width:360px;text-align:center}
+.login-box h1{font-size:28px;font-weight:900;margin-bottom:4px}
+.login-box h1 span{color:var(--accent)}
+.login-box .sub{font-size:12px;color:var(--text-muted);margin-bottom:24px}
+.login-box input{width:100%;padding:13px 16px;border-radius:var(--radius-sm);background:var(--bg);border:1.5px solid var(--border);color:var(--text);font-size:16px;text-align:center;outline:none;transition:border-color .15s}
+.login-box input:focus{border-color:var(--accent)}
+.login-box .err{color:var(--red);font-size:12px;margin-top:8px;display:none}
+
+/* App layout */
+.app-wrap{display:none;max-width:900px;margin:0 auto;padding:0 16px}
+.app-wrap.active{display:block}
+
+/* Header */
+.header{text-align:center;padding:24px 16px 16px;border-bottom:1px solid var(--border)}
+.header h1{font-size:24px;font-weight:900}
+.header h1 span{color:var(--accent)}
+.header .sub{font-size:11px;color:var(--text-muted);margin-top:2px}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;padding:12px 0;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;background:var(--bg)}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:8px 18px;border-radius:100px;font-size:13px;font-weight:600;border:1px solid transparent;cursor:pointer;white-space:nowrap;color:var(--text-muted);background:transparent;transition:all .15s}
+.tab:hover{color:var(--text);background:var(--surface)}
+.tab.active{color:var(--accent);background:rgba(255,92,40,0.1);border-color:rgba(255,92,40,0.2)}
+
+.page{display:none;padding:20px 0 40px}
+.page.active{display:block}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:12px}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.card-title{font-size:14px;font-weight:700}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px}
+.stat-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);margin-bottom:4px}
+.stat-value{font-size:22px;font-weight:800}
+.stat-sub{font-size:11px;color:var(--text-muted);margin-top:2px}
+.stat.good .stat-value{color:var(--green)}
+.stat.bad .stat-value{color:var(--red)}
+.stat.warn .stat-value{color:var(--yellow)}
+
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:100px;font-size:13px;font-weight:600;border:none;cursor:pointer;transition:all .15s;font-family:inherit}
+.btn:active{transform:scale(.96)}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-green{background:var(--green);color:#fff}
+.btn-outline{background:transparent;color:var(--text);border:1.5px solid var(--border)}
+.btn-sm{padding:6px 14px;font-size:12px}
+.btn-danger{background:var(--red);color:#fff}
+.btn-xs{padding:4px 10px;font-size:11px}
+
+input,select,textarea{width:100%;padding:11px 14px;border-radius:var(--radius-sm);background:var(--bg);border:1.5px solid var(--border);color:var(--text);font-size:13px;font-family:inherit;outline:none;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='%238a8a80'%3E%3Cpath d='M1 1l4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;cursor:pointer}
+label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin-bottom:4px}
+.field{margin-bottom:12px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.gap-sm{gap:8px}
+
+/* Item picker */
+.item-picker{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;margin-bottom:16px}
+.item-chip{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;cursor:pointer;transition:all .15s;display:flex;justify-content:space-between;align-items:center}
+.item-chip:hover{border-color:var(--accent)}
+.item-chip.selected{background:rgba(255,92,40,0.08);border-color:var(--accent)}
+.item-chip-name{font-size:13px;font-weight:600}
+.item-chip-price{font-size:12px;color:var(--accent);font-weight:700}
+
+/* Cart */
+.cart-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.cart-item:last-child{border-bottom:none}
+.cart-item-name{flex:1;font-size:13px;font-weight:500}
+.cart-item-qty{display:flex;align-items:center;gap:8px}
+.qty-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.qty-num{font-size:14px;font-weight:700;min-width:20px;text-align:center}
+.cart-item-price{font-size:13px;font-weight:700;color:var(--accent);min-width:60px;text-align:right}
+
+/* Order rows */
+.order-row{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:6px;cursor:pointer;transition:border-color .15s}
+.order-row:hover{border-color:var(--text-muted)}
+.order-row-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.order-id{font-size:12px;font-weight:700;color:var(--accent)}
+.order-time{font-size:11px;color:var(--text-muted)}
+.order-summary{font-size:13px;color:var(--text-muted)}
+.order-total{font-size:15px;font-weight:800;color:var(--green)}
+.order-source{font-size:10px;padding:2px 6px;border-radius:100px;display:inline-block;margin-left:6px}
+.order-source.website{background:rgba(46,204,113,0.12);color:var(--green)}
+.order-source.manual{background:rgba(255,92,40,0.12);color:var(--accent)}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);width:92%;max-width:500px;max-height:80vh;border-radius:var(--radius);overflow-y:auto;border:1px solid var(--border)}
+.modal-header{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:1}
+.modal-header h3{font-size:15px;font-weight:700}
+.modal-close{background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;padding:4px 8px}
+.modal-body{padding:18px}
+
+.ing-row{display:grid;grid-template-columns:2fr 1fr 1fr 36px;gap:6px;align-items:end;margin-bottom:8px}
+
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);padding:8px 10px;border-bottom:1px solid var(--border)}
+.tbl td{padding:10px;border-bottom:1px solid var(--border)}
+.tbl tr:hover td{background:var(--surface2)}
+
+.badge{display:inline-block;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700}
+.badge-green{background:rgba(46,204,113,0.12);color:var(--green)}
+.badge-red{background:rgba(231,76,60,0.12);color:var(--red)}
+.badge-yellow{background:rgba(243,156,18,0.12);color:var(--yellow)}
+
+.empty{text-align:center;padding:40px 20px;color:var(--text-muted);font-size:14px}
+.empty-icon{font-size:40px;margin-bottom:10px}
+
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:200;background:var(--green);color:#fff;padding:10px 24px;border-radius:100px;font-size:13px;font-weight:600;animation:toastUp .5s ease-out;pointer-events:none}
+@keyframes toastUp{0%{opacity:0;transform:translateX(-50%) translateY(10px)}20%{opacity:1;transform:translateX(-50%) translateY(0)}80%{opacity:1}100%{opacity:0;transform:translateX(-50%) translateY(-10px)}}
+
+.logout-btn{font-size:11px;color:var(--text-muted);cursor:pointer;background:none;border:none;position:absolute;top:14px;right:16px}
+
+@media(max-width:480px){
+  .stats{grid-template-columns:1fr 1fr}
+  .item-picker{grid-template-columns:1fr 1fr}
+  .row{grid-template-columns:1fr}
+  .ing-row{grid-template-columns:2fr 1fr 1fr 32px}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ LOGIN ═══ -->
+<div class="login-wrap" id="login-screen">
+<div class="login-box">
+  <h1>Burger <span>Lab</span> POS</h1>
+  <div class="sub">Enter password to continue</div>
+  <input type="password" id="login-password" placeholder="Password" onkeydown="if(event.key==='Enter')POS.login()" autofocus>
+  <div class="err" id="login-err">Incorrect password</div>
+</div>
+</div>
+
+<!-- ═══ APP ═══ -->
+<div class="app-wrap" id="app-screen">
+<div style="position:relative">
+<div class="header">
+  <h1>Burger <span>Lab</span> POS</h1>
+  <div class="sub" id="today-label"></div>
+</div>
+<button class="logout-btn" onclick="POS.logout()">🔒 Logout</button>
+</div>
+
+<nav class="tabs" id="tabs">
+  <button class="tab active" data-page="dashboard">📊 Dashboard</button>
+  <button class="tab" data-page="order">🛒 New Order</button>
+  <button class="tab" data-page="orders">📋 Orders</button>
+  <button class="tab" data-page="menu">🍔 Costs</button>
+  <button class="tab" data-page="reports">📈 Reports</button>
+</nav>
+
+<!-- ═══ DASHBOARD ═══ -->
+<div class="page active" id="page-dashboard">
+  <div class="stats" id="dash-stats"></div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">Today's Orders</span></div>
+    <div id="dash-recent"></div>
+  </div>
+</div>
+
+<!-- ═══ NEW ORDER ═══ -->
+<div class="page" id="page-order">
+  <div class="card">
+    <div class="card-header"><span class="card-title">Items</span></div>
+    <div class="item-picker" id="item-picker"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-title">Order</span><span id="cart-total" style="font-size:20px;font-weight:800;color:var(--accent)">₹0</span></div>
+    <div id="cart-items"><div class="empty"><div class="empty-icon">🛒</div>Tap items to add</div></div>
+  </div>
+  <button class="btn btn-green" style="width:100%;padding:14px;font-size:15px;justify-content:center" onclick="POS.saveOrder()" id="btn-save-order" disabled>💾 Save Order</button>
+</div>
+
+<!-- ═══ ORDERS ═══ -->
+<div class="page" id="page-orders">
+  <div class="row" style="margin-bottom:16px">
+    <div class="field"><label>From</label><input type="date" id="orders-from"></div>
+    <div class="field"><label>To</label><input type="date" id="orders-to"></div>
+  </div>
+  <div id="orders-list"></div>
+</div>
+
+<!-- ═══ COSTS ═══ -->
+<div class="page" id="page-menu">
+  <div id="costs-list"></div>
+</div>
+
+<!-- ═══ REPORTS ═══ -->
+<div class="page" id="page-reports">
+  <div class="row" style="margin-bottom:16px">
+    <div class="field"><label>From</label><input type="date" id="rpt-from"></div>
+    <div class="field"><label>To</label><input type="date" id="rpt-to"></div>
+  </div>
+  <button class="btn btn-primary" style="width:100%;justify-content:center;margin-bottom:16px" onclick="POS.generateReport()">Generate Report</button>
+  <div id="report-output"></div>
+</div>
+
+</div>
+
+<!-- ═══ MODAL: Menu Item Cost Editor ═══ -->
+<div class="modal-overlay" id="modal-cost">
+<div class="modal">
+<div class="modal-header"><h3 id="modal-cost-title">Edit Costs</h3><button class="modal-close" onclick="POS.closeModal('modal-cost')">✕</button></div>
+<div class="modal-body">
+  <div style="margin-bottom:8px;font-size:14px;font-weight:700" id="modal-cost-name"></div>
+  <div style="font-size:12px;color:var(--accent);margin-bottom:16px">Sell Price: ₹<span id="modal-cost-sell"></span></div>
+  <div class="field"><label>Cost Price (₹)</label><input type="number" id="cost-price" min="0" step="0.5" onchange="POS.updateCostMargin()"></div>
+  <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Margin: <span id="cost-margin-pct" style="font-weight:700">--</span></div>
+  <div class="card-header">
+    <span class="card-title" style="font-size:12px">🧾 Ingredients</span>
+    <button class="btn btn-outline btn-xs" onclick="POS.addIngredient()">+ Add</button>
+  </div>
+  <div id="cost-ingredients"></div>
+  <input type="hidden" id="cost-menu-key">
+  <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:12px;padding:12px" onclick="POS.saveCosts()">Save</button>
+</div></div></div>
+
+<!-- ═══ MODAL: Order Detail ═══ -->
+<div class="modal-overlay" id="modal-order">
+<div class="modal">
+<div class="modal-header"><h3>Order Detail</h3><button class="modal-close" onclick="POS.closeModal('modal-order')">✕</button></div>
+<div class="modal-body" id="modal-order-body"></div>
+</div></div>
+
+<script>
+// ═══ PASSWORD ═══
+var POS_PASSWORD = "burgerlab2024";
+
+// ═══ DATABASE ═══
+var db = new Dexie("BurgerLabPOS");
+db.version(2).stores({
+  menu: "++id,&menuKey",
+  costs: "&menuKey",
+  orders: "++id,timestamp"
+});
+
+// ═══ MENU DATA (loaded from config.js) ═══
+var MENU = null;
+
+// ═══ POS ENGINE ═══
+var POS = {
+  cart: [],
+  editingCostKey: null,
+  tempIngredients: [],
+
+  // ── Auth ──
+  login: function() {
+    var pw = document.getElementById("login-password").value;
+    if (pw === POS_PASSWORD) {
+      sessionStorage.setItem("burgerlab_pos_auth", "1");
+      document.getElementById("login-screen").style.display = "none";
+      document.getElementById("app-screen").classList.add("active");
+      document.getElementById("login-err").style.display = "none";
+      POS.boot();
+    } else {
+      document.getElementById("login-err").style.display = "block";
+      document.getElementById("login-password").value = "";
+    }
+  },
+
+  logout: function() {
+    sessionStorage.removeItem("burgerlab_pos_auth");
+    location.reload();
+  },
+
+  // ── Boot ──
+  boot: async function() {
+    document.getElementById("today-label").textContent = "📅 " + new Date().toLocaleDateString("en-IN", {weekday:"long",day:"numeric",month:"short"});
+
+    // Load menu from config.js
+    if (!MENU) {
+      try {
+        var resp = await fetch("../config.js");
+        var text = await resp.text();
+        eval(text.replace("const BURGERLAB", "MENU = "));
+      } catch(e) {
+        console.error("Failed to load config.js", e);
+        MENU = { menu: {} };
+      }
+    }
+
+    // Tabs
+    document.querySelectorAll(".tab").forEach(function(t) {
+      t.addEventListener("click", function() {
+        document.querySelectorAll(".tab").forEach(function(x) { x.classList.remove("active"); });
+        document.querySelectorAll(".page").forEach(function(x) { x.classList.remove("active"); });
+        t.classList.add("active");
+        document.getElementById("page-" + t.dataset.page).classList.add("active");
+        if (t.dataset.page === "dashboard") POS.renderDashboard();
+        if (t.dataset.page === "order") POS.renderItemPicker();
+        if (t.dataset.page === "orders") POS.renderOrders();
+        if (t.dataset.page === "menu") POS.renderCosts();
+      });
+    });
+
+    var today = new Date().toISOString().split("T")[0];
+    document.getElementById("orders-from").value = today;
+    document.getElementById("orders-to").value = today;
+    document.getElementById("rpt-from").value = today;
+    document.getElementById("rpt-to").value = today;
+
+    POS.renderDashboard();
+  },
+
+  toast: function(msg) {
+    var el = document.createElement("div"); el.className = "toast"; el.textContent = msg;
+    document.body.appendChild(el); setTimeout(function() { el.remove(); }, 600);
+  },
+
+  openModal: function(id) { document.getElementById(id).classList.add("open"); },
+  closeModal: function(id) { document.getElementById(id).classList.remove("open"); },
+
+  // ── Get all menu items from config.js ──
+  getMenuItems: function() {
+    var items = [];
+    if (!MENU || !MENU.menu) return items;
+    Object.keys(MENU.menu).forEach(function(catKey) {
+      var cat = MENU.menu[catKey];
+      var subs = cat.subcategories || {};
+      Object.keys(subs).forEach(function(subKey) {
+        subs[subKey].forEach(function(it) {
+          if (catKey === "burgers" || catKey === "sandwiches") {
+            items.push({ name: it.name, variant: "Regular", price: it.base, category: cat.label, menuKey: it.name + "|||Regular" });
+            if (it.upgrade && it.upgrade.price) {
+              var vname = it.upgrade.label || "With Cheese";
+              items.push({ name: it.name, variant: vname, price: it.upgrade.price, category: cat.label, menuKey: it.name + "|||" + vname });
+            }
+          } else if (catKey === "sides") {
+            var v = it.size || "Regular";
+            items.push({ name: it.name, variant: v, price: it.price, category: cat.label, menuKey: it.name + "|||" + v });
+          } else if (catKey === "combos") {
+            items.push({ name: it.name, variant: "Combo", price: it.price, category: cat.label, menuKey: it.name + "|||Combo" });
+          }
+        });
+      });
+    });
+    return items;
+  },
+
+  // ── DASHBOARD ──
+  renderDashboard: async function() {
+    var today = new Date().toISOString().split("T")[0];
+    var orders = await db.orders.where("timestamp").startsWith(today).toArray();
+    var totalRev = orders.reduce(function(s,o) { return s + (o.totalSell||0); }, 0);
+    var totalCost = orders.reduce(function(s,o) { return s + (o.totalCost||0); }, 0);
+    var profit = totalRev - totalCost;
+    var margin = totalRev > 0 ? ((profit / totalRev) * 100).toFixed(1) : 0;
+    var avgOrder = orders.length > 0 ? (totalRev / orders.length).toFixed(0) : 0;
+    var webOrders = orders.filter(function(o) { return o.source === "website"; }).length;
+
+    document.getElementById("dash-stats").innerHTML =
+      '<div class="stat good"><div class="stat-label">Revenue</div><div class="stat-value">₹' + totalRev + '</div></div>' +
+      '<div class="stat"><div class="stat-label">Cost</div><div class="stat-value">₹' + totalCost + '</div></div>' +
+      '<div class="stat ' + (profit >= 0 ? 'good' : 'bad') + '"><div class="stat-label">Profit</div><div class="stat-value">₹' + profit + '</div><div class="stat-sub">' + margin + '% margin</div></div>' +
+      '<div class="stat"><div class="stat-label">Orders</div><div class="stat-value">' + orders.length + '</div><div class="stat-sub">' + webOrders + ' web · Avg ₹' + avgOrder + '</div></div>';
+
+    var html = "";
+    orders.slice(-8).reverse().forEach(function(o) {
+      var time = o.timestamp ? o.timestamp.slice(11,16) : "--:--";
+      var items = (o.items||[]).map(function(i) { return i.name + " x" + i.qty; }).join(", ");
+      html += '<div class="order-row" onclick="POS.viewOrder(' + o.id + ')">' +
+        '<div class="order-row-header"><span class="order-id">#' + o.id + '</span><span class="order-time">' + time + '</span>' +
+        (o.source === "website" ? '<span class="order-source website">web</span>' : '') + '</div>' +
+        '<div class="order-summary">' + items + '</div>' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">' +
+        '<span class="order-total">₹' + o.totalSell + '</span>' +
+        '<span style="font-size:11px;color:' + ((o.totalCost > 0 && o.totalSell > 0 ? ((o.totalSell - o.totalCost) / o.totalSell * 100) : 100) >= 50 ? 'var(--green)' : 'var(--yellow)') + '">' +
+        (o.totalCost > 0 && o.totalSell > 0 ? ((o.totalSell - o.totalCost) / o.totalSell * 100).toFixed(0) : '?') + '% margin</span></div></div>';
+    });
+    document.getElementById("dash-recent").innerHTML = html || '<div class="empty">No orders today</div>';
+  },
+
+  // ── NEW ORDER ──
+  renderItemPicker: async function() {
+    var items = POS.getMenuItems();
+    var html = "";
+    items.forEach(function(it) {
+      var sel = POS.cart.some(function(c) { return c.menuKey === it.menuKey; });
+      html += '<div class="item-chip' + (sel ? ' selected' : '') + '" onclick="POS.toggleCartItem(\'' + it.menuKey.replace(/'/g,"\\'") + '\',' + it.price + ',\'' + (it.name + " (" + it.variant + ")").replace(/'/g,"\\'") + '\')" id="chip-' + it.menuKey.replace(/[^a-zA-Z0-9]/g,'_') + '">' +
+        '<span class="item-chip-name">' + it.name + ' <span style="font-size:10px;color:var(--text-muted)">' + it.variant + '</span></span>' +
+        '<span class="item-chip-price">₹' + it.price + '</span></div>';
+    });
+    document.getElementById("item-picker").innerHTML = html;
+    POS.renderCart();
+  },
+
+  toggleCartItem: function(menuKey, price, displayName) {
+    var existing = POS.cart.find(function(c) { return c.menuKey === menuKey; });
+    if (existing) {
+      POS.cart = POS.cart.filter(function(c) { return c.menuKey !== menuKey; });
+    } else {
+      POS.cart.push({ menuKey: menuKey, name: displayName, sellPrice: price, qty: 1 });
+    }
+    POS.renderItemPicker();
+    POS.renderCart();
+  },
+
+  changeCartQty: function(menuKey, delta) {
+    var item = POS.cart.find(function(c) { return c.menuKey === menuKey; });
+    if (!item) return;
+    item.qty += delta;
+    if (item.qty <= 0) POS.cart = POS.cart.filter(function(c) { return c.menuKey !== menuKey; });
+    POS.renderItemPicker();
+    POS.renderCart();
+  },
+
+  renderCart: function() {
+    var total = POS.cart.reduce(function(s, i) { return s + (i.sellPrice * i.qty); }, 0);
+    document.getElementById("cart-total").textContent = "₹" + total;
+    document.getElementById("btn-save-order").disabled = POS.cart.length === 0;
+
+    if (POS.cart.length === 0) {
+      document.getElementById("cart-items").innerHTML = '<div class="empty"><div class="empty-icon">🛒</div>Tap items to add</div>';
+      return;
+    }
+    var html = "";
+    POS.cart.forEach(function(item) {
+      html += '<div class="cart-item">' +
+        '<span class="cart-item-name">' + item.name + '</span>' +
+        '<div class="cart-item-qty">' +
+        '<button class="qty-btn" onclick="POS.changeCartQty(\'' + item.menuKey.replace(/'/g,"\\'") + '\',-1)">−</button>' +
+        '<span class="qty-num">' + item.qty + '</span>' +
+        '<button class="qty-btn" onclick="POS.changeCartQty(\'' + item.menuKey.replace(/'/g,"\\'") + '\',1)">+</button>' +
+        '</div>' +
+        '<span class="cart-item-price">₹' + (item.sellPrice * item.qty) + '</span></div>';
+    });
+    document.getElementById("cart-items").innerHTML = html;
+  },
+
+  saveOrder: async function() {
+    if (POS.cart.length === 0) return;
+    var totalSell = POS.cart.reduce(function(s, i) { return s + (i.sellPrice * i.qty); }, 0);
+
+    // Look up cost prices from costs DB
+    var costMap = {};
+    var costs = await db.costs.toArray();
+    costs.forEach(function(c) { costMap[c.menuKey] = c; });
+
+    var items = [];
+    var totalCost = 0;
+    POS.cart.forEach(function(ci) {
+      var cost = costMap[ci.menuKey];
+      var cp = cost ? cost.costPrice : 0;
+      totalCost += cp * ci.qty;
+      items.push({ name: ci.name, qty: ci.qty, sellPrice: ci.sellPrice, costPrice: cp });
+    });
+
+    var order = {
+      timestamp: new Date().toISOString(),
+      items: items,
+      totalSell: totalSell,
+      totalCost: totalCost,
+      totalProfit: totalSell - totalCost,
+      margin: totalSell > 0 ? ((totalSell - totalCost) / totalSell * 100) : 0,
+      source: "manual"
+    };
+    await db.orders.add(order);
+    POS.cart = [];
+    POS.renderItemPicker();
+    POS.renderCart();
+    POS.toast("Order saved! 💾");
+  },
+
+  // ── ORDERS ──
+  renderOrders: async function() {
+    var from = document.getElementById("orders-from").value;
+    var to = document.getElementById("orders-to").value;
+    var toEnd = to ? to + "T23:59:59" : "9999";
+    var orders = await db.orders.where("timestamp").between(from, toEnd, true, true).reverse().sortBy("timestamp");
+    if (orders.length === 0) {
+      document.getElementById("orders-list").innerHTML = '<div class="empty"><div class="empty-icon">📋</div>No orders in this range</div>';
+      return;
+    }
+    var totalRev = orders.reduce(function(s,o) { return s + (o.totalSell||0); }, 0);
+    var html = '<div style="margin-bottom:12px;font-size:13px;color:var(--text-muted)">' + orders.length + ' orders · Total: <strong style="color:var(--green)">₹' + totalRev + '</strong></div>';
+    orders.forEach(function(o) {
+      var ts = o.timestamp ? new Date(o.timestamp) : null;
+      var time = ts ? ts.toLocaleString("en-IN", {month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}) : "--";
+      var items = (o.items||[]).map(function(i) { return i.name + " x" + i.qty; }).join(", ");
+      var srcTag = o.source === "website" ? '<span class="order-source website">web</span>' : '<span class="order-source manual">manual</span>';
+      html += '<div class="order-row" onclick="POS.viewOrder(' + o.id + ')">' +
+        '<div class="order-row-header"><span class="order-id">#' + o.id + '</span><span class="order-time">' + time + srcTag + '</span></div>' +
+        '<div class="order-summary">' + items + '</div>' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">' +
+        '<span class="order-total">₹' + o.totalSell + '</span>' +
+        '<button class="btn btn-sm btn-danger" onclick="event.stopPropagation();POS.deleteOrder(' + o.id + ')">🗑</button></div></div>';
+    });
+    document.getElementById("orders-list").innerHTML = html;
+  },
+
+  viewOrder: async function(id) {
+    var o = await db.orders.get(id);
+    if (!o) return;
+    var html = '<span class="badge badge-green">#' + o.id + '</span> ';
+    html += '<span style="font-size:12px;color:var(--text-muted);margin-left:6px">' + new Date(o.timestamp).toLocaleString("en-IN") + '</span>';
+    html += '<span class="order-source ' + (o.source||"manual") + '" style="margin-left:6px">' + (o.source||"manual") + '</span>';
+    if (o.delivery && (o.delivery.tower || o.delivery.flat)) {
+      html += '<div style="margin-top:6px;font-size:12px;color:var(--text-muted)">📍 Tower: ' + (o.delivery.tower||"-") + ' | Flat: ' + (o.delivery.flat||"-") + '</div>';
+    }
+    if (o.spice) {
+      html += '<div style="font-size:12px;color:var(--text-muted)">🌶️ Spice: ' + o.spice + '</div>';
+    }
+    html += '<table class="tbl" style="margin-top:10px"><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr>';
+    (o.items||[]).forEach(function(i) {
+      html += '<tr><td>' + i.name + '</td><td>' + i.qty + '</td><td>₹' + i.sellPrice + '</td><td>₹' + (i.sellPrice * i.qty) + '</td></tr>';
+    });
+    html += '</table>';
+    html += '<div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">';
+    html += '<div><span style="color:var(--text-muted)">Revenue</span><br><strong>₹' + o.totalSell + '</strong></div>';
+    html += '<div><span style="color:var(--text-muted)">Cost</span><br><strong>₹' + o.totalCost + '</strong></div>';
+    html += '<div><span style="color:var(--text-muted)">Profit</span><br><strong style="color:' + ((o.totalProfit||0) >= 0 ? 'var(--green)' : 'var(--red)') + '">₹' + (o.totalProfit||0) + '</strong></div>';
+    html += '<div><span style="color:var(--text-muted)">Margin</span><br><strong>' + ((o.margin)||0).toFixed(0) + '%</strong></div></div>';
+    document.getElementById("modal-order-body").innerHTML = html;
+    POS.openModal("modal-order");
+  },
+
+  deleteOrder: async function(id) {
+    if (!confirm("Delete order #" + id + "?")) return;
+    await db.orders.delete(id);
+    POS.renderOrders();
+    POS.toast("Deleted");
+  },
+
+  // ── COSTS ──
+  renderCosts: async function() {
+    var items = POS.getMenuItems();
+    var costs = await db.costs.toArray();
+    var costMap = {};
+    costs.forEach(function(c) { costMap[c.menuKey] = c; });
+
+    var byCat = {};
+    items.forEach(function(it) {
+      var cat = it.category || "Other";
+      if (!byCat[cat]) byCat[cat] = [];
+      byCat[cat].push(it);
+    });
+
+    var html = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">';
+    html += '<span style="font-size:12px;color:var(--text-muted)">Set cost prices for each menu item. Orders auto-use these costs for profit calculation.</span>';
+    html += '</div>';
+
+    Object.keys(byCat).forEach(function(cat) {
+      html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--accent);margin:16px 0 8px">' + cat + '</div>';
+      byCat[cat].forEach(function(it) {
+        var cost = costMap[it.menuKey];
+        var cp = cost ? cost.costPrice : 0;
+        var margin = it.price > 0 ? ((it.price - cp) / it.price * 100).toFixed(0) : 0;
+        var hasData = cost && cost.costPrice > 0;
+        html += '<div class="order-row" style="cursor:pointer" onclick="POS.openCostEditor(\'' + it.menuKey.replace(/'/g,"\\'") + '\',' + it.price + ',\'' + (it.name + " (" + it.variant + ")").replace(/'/g,"\\'") + '\')">' +
+          '<div class="order-row-header"><span style="font-weight:600">' + it.name + ' <span style="font-size:10px;color:var(--text-muted);font-weight:400">' + it.variant + '</span></span>' +
+          '<div><span style="color:var(--accent);font-weight:700">₹' + it.price + '</span>' +
+          '<span style="font-size:11px;color:var(--text-muted);margin-left:6px">Cost: ₹' + cp + '</span></div></div>' +
+          '<div style="display:flex;justify-content:space-between;align-items:center">' +
+          '<span class="badge ' + (hasData ? (margin >= 50 ? 'badge-green' : margin >= 30 ? 'badge-yellow' : 'badge-red') : '') + '" style="' + (!hasData ? 'background:var(--surface2);color:var(--text-muted)' : '') + '">' + (hasData ? margin + '% margin' : 'No cost set') + '</span>' +
+          '<span style="font-size:10px;color:var(--text-muted)">✏️ Edit</span></div></div>';
+      });
+    });
+
+    document.getElementById("costs-list").innerHTML = html;
+  },
+
+  openCostEditor: async function(menuKey, sellPrice, displayName) {
+    POS.editingCostKey = menuKey;
+    POS.tempIngredients = [];
+    document.getElementById("modal-cost-title").textContent = "Edit Costs";
+    document.getElementById("modal-cost-name").textContent = displayName;
+    document.getElementById("modal-cost-sell").textContent = sellPrice;
+    document.getElementById("cost-menu-key").value = menuKey;
+    document.getElementById("cost-ingredients").innerHTML = "";
+
+    var cost = await db.costs.get({ menuKey: menuKey });
+    if (cost) {
+      document.getElementById("cost-price").value = cost.costPrice || 0;
+      POS.tempIngredients = cost.ingredients ? JSON.parse(JSON.stringify(cost.ingredients)) : [];
+    } else {
+      document.getElementById("cost-price").value = "";
+      POS.tempIngredients = [];
+    }
+    POS.renderIngredients();
+    POS.updateCostMargin();
+    POS.openModal("modal-cost");
+  },
+
+  addIngredient: function() {
+    POS.tempIngredients.push({ name: "", qty: 1, unit: "pcs", cost: 0 });
+    POS.renderIngredients();
+  },
+
+  removeIngredient: function(idx) {
+    POS.tempIngredients.splice(idx, 1);
+    POS.renderIngredients();
+    POS.recalcCostFromIngredients();
+  },
+
+  renderIngredients: function() {
+    var html = "";
+    POS.tempIngredients.forEach(function(ing, i) {
+      html += '<div class="ing-row">' +
+        '<input type="text" placeholder="Name" value="' + ing.name + '" onchange="POS.tempIngredients[' + i + '].name=this.value">' +
+        '<input type="number" placeholder="Qty" value="' + ing.qty + '" min="0" step="0.1" style="width:100%" onchange="POS.tempIngredients[' + i + '].qty=parseFloat(this.value)||0;POS.recalcCostFromIngredients()">' +
+        '<input type="number" placeholder="₹" value="' + ing.cost + '" min="0" step="0.5" style="width:100%" onchange="POS.tempIngredients[' + i + '].cost=parseFloat(this.value)||0;POS.recalcCostFromIngredients()">' +
+        '<button class="btn btn-sm btn-danger" style="padding:6px 10px" onclick="POS.removeIngredient(' + i + ')">✕</button></div>';
+    });
+    document.getElementById("cost-ingredients").innerHTML = html || '<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:12px">No ingredients</div>';
+  },
+
+  recalcCostFromIngredients: function() {
+    var total = POS.tempIngredients.reduce(function(s, ing) { return s + ((ing.qty||0) * (ing.cost||0)); }, 0);
+    document.getElementById("cost-price").value = total.toFixed(2);
+    POS.updateCostMargin();
+  },
+
+  updateCostMargin: function() {
+    var sell = parseFloat(document.getElementById("modal-cost-sell").textContent) || 0;
+    var cost = parseFloat(document.getElementById("cost-price").value) || 0;
+    var m = sell > 0 ? ((sell - cost) / sell * 100).toFixed(1) : 0;
+    var el = document.getElementById("cost-margin-pct");
+    el.textContent = m + "%";
+    el.style.color = m >= 50 ? "var(--green)" : m >= 30 ? "var(--yellow)" : "var(--red)";
+  },
+
+  saveCosts: async function() {
+    var menuKey = document.getElementById("cost-menu-key").value;
+    var sellPrice = parseFloat(document.getElementById("modal-cost-sell").textContent) || 0;
+    var costPrice = parseFloat(document.getElementById("cost-price").value) || 0;
+    var ingredients = POS.tempIngredients.filter(function(i) { return i.name.trim(); });
+
+    var existing = await db.costs.get({ menuKey: menuKey });
+    if (existing) {
+      await db.costs.update(existing.id, { menuKey: menuKey, sellPrice: sellPrice, costPrice: costPrice, ingredients: ingredients });
+    } else {
+      await db.costs.add({ menuKey: menuKey, sellPrice: sellPrice, costPrice: costPrice, ingredients: ingredients });
+    }
+    POS.closeModal("modal-cost");
+    POS.renderCosts();
+    POS.toast("Cost saved!");
+  },
+
+  // ── REPORTS ──
+  generateReport: async function() {
+    var from = document.getElementById("rpt-from").value;
+    var to = document.getElementById("rpt-to").value;
+    if (!from) { POS.toast("Select From date"); return; }
+    var toEnd = to ? to + "T23:59:59" : "9999";
+    var orders = await db.orders.where("timestamp").between(from, toEnd, true, true).toArray();
+    if (orders.length === 0) {
+      document.getElementById("report-output").innerHTML = '<div class="empty"><div class="empty-icon">📈</div>No orders in this period</div>';
+      return;
+    }
+    var totalRev = orders.reduce(function(s,o) { return s + (o.totalSell||0); }, 0);
+    var totalCost = orders.reduce(function(s,o) { return s + (o.totalCost||0); }, 0);
+    var profit = totalRev - totalCost;
+    var margin = totalRev > 0 ? (profit / totalRev * 100).toFixed(1) : 0;
+
+    var itemStats = {};
+    orders.forEach(function(o) {
+      (o.items||[]).forEach(function(i) {
+        var k = i.name;
+        if (!itemStats[k]) itemStats[k] = { qty: 0, rev: 0, cost: 0 };
+        itemStats[k].qty += i.qty;
+        itemStats[k].rev += i.sellPrice * i.qty;
+        itemStats[k].cost += (i.costPrice||0) * i.qty;
+      });
+    });
+    var sorted = Object.entries(itemStats).sort(function(a,b) { return b[1].rev - a[1].rev; });
+
+    var html = '<div class="stats" style="margin-bottom:16px">' +
+      '<div class="stat good"><div class="stat-label">Revenue</div><div class="stat-value">₹' + totalRev + '</div></div>' +
+      '<div class="stat"><div class="stat-label">Cost</div><div class="stat-value">₹' + totalCost + '</div></div>' +
+      '<div class="stat ' + (profit >= 0 ? 'good' : 'bad') + '"><div class="stat-label">Profit</div><div class="stat-value">₹' + profit + '</div><div class="stat-sub">' + margin + '% margin</div></div>' +
+      '<div class="stat"><div class="stat-label">Orders</div><div class="stat-value">' + orders.length + '</div></div></div>';
+
+    var webCnt = orders.filter(function(o) { return o.source === "website"; }).length;
+    var manualCnt = orders.filter(function(o) { return o.source !== "website"; }).length;
+    html += '<div class="card"><div class="card-header"><span class="card-title">Item Performance</span><span style="font-size:11px;color:var(--text-muted)">' + webCnt + ' web · ' + manualCnt + ' manual</span></div>';
+    html += '<table class="tbl"><tr><th>Item</th><th>Sold</th><th>Revenue</th><th>Cost</th><th>Profit</th><th>Margin</th></tr>';
+    sorted.forEach(function(e) {
+      var s = e[1]; var pm = s.rev > 0 ? ((s.rev - s.cost) / s.rev * 100) : 0;
+      html += '<tr><td>' + e[0] + '</td><td>' + s.qty + '</td><td>₹' + s.rev + '</td><td>₹' + s.cost.toFixed(0) + '</td>' +
+        '<td style="color:' + (s.rev >= s.cost ? 'var(--green)' : 'var(--red)') + '">₹' + (s.rev - s.cost).toFixed(0) + '</td>' +
+        '<td>' + (s.cost > 0 ? '<span class="badge ' + (pm >= 50 ? 'badge-green' : pm >= 30 ? 'badge-yellow' : 'badge-red') + '">' + pm.toFixed(0) + '%</span>' : '<span style="color:var(--text-muted);font-size:11px">no cost data</span>') + '</td></tr>';
+    });
+    html += '</table></div>';
+
+    // Leakage alert
+    var lowMargin = sorted.filter(function(e) {
+      var s = e[1]; return s.cost > 0 && s.rev > 0 && (s.rev - s.cost) / s.rev * 100 < 30;
+    });
+    if (lowMargin.length > 0) {
+      html += '<div class="card" style="border-color:rgba(231,76,60,0.3);background:rgba(231,76,60,0.03);margin-top:12px">' +
+        '<div class="card-header"><span class="card-title" style="color:var(--red)">⚠️ Low Margin Alert (&lt;30%)</span></div>' +
+        '<div style="font-size:13px">' + lowMargin.map(function(e) { var s=e[1]; return '• ' + e[0] + ' — ' + ((s.rev-s.cost)/s.rev*100).toFixed(0) + '% (Rev ₹' + s.rev + ', Cost ₹' + s.cost.toFixed(0) + ')'; }).join("<br>") + '</div>' +
+        '<div style="margin-top:8px;font-size:12px;color:var(--text-muted)">Consider raising prices or reducing ingredient costs.</div></div>';
+    }
+
+    // Items with no cost set
+    var noCost = sorted.filter(function(e) { return e[1].cost === 0; });
+    if (noCost.length > 0) {
+      html += '<div class="card" style="border-color:rgba(243,156,18,0.3);background:rgba(243,156,18,0.03);margin-top:12px">' +
+        '<div class="card-header"><span class="card-title" style="color:var(--yellow)">📝 Missing Cost Data</span></div>' +
+        '<div style="font-size:13px">Set costs for: ' + noCost.map(function(e) { return e[0]; }).join(", ") + '</div></div>';
+    }
+
+    document.getElementById("report-output").innerHTML = html;
+  }
+};
+
+// ═══ INIT ═══
+(function() {
+  if (sessionStorage.getItem("burgerlab_pos_auth") === "1") {
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("app-screen").classList.add("active");
+    POS.boot();
+  } else {
+    document.getElementById("login-password").focus();
+  }
+})();
+</script>
+</body>
+</html>
