@@ -4,7 +4,6 @@
 ### Subcategory: Savory
 - Item: OG Alu Tikki | Base Price: 60 | Cheese Variant: 70
 - Item: Garden Fresh Veggie | Base Price: 80 | Cheese Variant: 90 | Tag: Bestseller
-- Item: Cheese Burst Burger | Base Price: 90 | Cheese Variant: N/A
 - Item: Paneer Paradise | Base Price: 100 | Cheese Variant: 110 | Tag: Bestseller
 - Item: Jalapeno Inferno | Base Price: 100 | Cheese Variant: 110
 - Item: Double Beast | Base Price: 120 | Cheese Variant: 130 | Tag: Bestseller
@@ -43,14 +42,16 @@
 - Item: Cheesy Fries | Price: 100
 - Item: Spicy Masala Fries | Price: 100
 - Item: Fully Loaded Fries | Price: 130 | Tag: Bestseller
-- Item: Stuffed Garlic Bread | Price: 100
+- Item: Stuffed Garlic Bread | Price: 100 | Tag: Bestseller
 - Item: Paneer Garlic Bread | Price: 130
 - Item: Choco Lava Cake | Price: 70
 - Item: Grilled Pineapple | Price: 100
 
 
 ## CATEGORY: COMBOS
+- Combo: Alu Tikki + Fries + Coke | Price: 130
 - Combo: Jalapeno Inferno Burger + Peri Peri Fries | Price: 180
 - Combo: Paneer Paradise Burger + Jalapeno Inferno Burger + Fries | Price: 220
 - Combo: Paneer Garden Royale Burger + Loaded Fries | Price: 240
 - Combo: Tandoori Paneer Burger + Loaded Fries + Coke | Price: 270
+- Combo: Make a Meal (Fries + Coke) | Price: 70

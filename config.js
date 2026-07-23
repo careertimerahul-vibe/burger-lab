@@ -48,7 +48,6 @@ const BURGERLAB = {
         "Savory": [
           { name: "OG Alu Tikki", price: 60, upgrade: { price: 70, label: "w/ cheese" } },
           { name: "Garden Fresh Veggie", price: 80, upgrade: { price: 90 }, tag: "Bestseller" },
-          { name: "Cheese Burst Burger", price: 90 },
           { name: "Paneer Paradise", price: 100, upgrade: { price: 110 }, tag: "Bestseller" },
           { name: "Jalapeno Inferno", price: 100, upgrade: { price: 110 } },
           { name: "Double Beast", price: 120, upgrade: { price: 130 }, tag: "Bestseller" }
@@ -97,7 +96,7 @@ const BURGERLAB = {
           { name: "Cheesy Fries", price: 100 },
           { name: "Spicy Masala Fries", price: 100 },
           { name: "Fully Loaded Fries", price: 130, tag: "Bestseller" },
-          { name: "Stuffed Garlic Bread", price: 100 },
+          { name: "Stuffed Garlic Bread", price: 100, tag: "Bestseller" },
           { name: "Paneer Garlic Bread", price: 130 },
           { name: "Choco Lava Cake", price: 70 },
           { name: "Grilled Pineapple", price: 100 }
@@ -109,10 +108,12 @@ const BURGERLAB = {
       label: "🔥 Combos",
       subcategories: {
         "_": [
+          { name: "Alu Tikki + Fries + Coke", price: 130 },
           { name: "Jalapeno Inferno + Peri Peri Fries", price: 180 },
           { name: "Paneer Paradise + Jalapeno Inferno + Fries", price: 220 },
           { name: "Paneer Garden Royale + Loaded Fries", price: 240 },
-          { name: "Tandoori Paneer + Loaded Fries + Coke", price: 270 }
+          { name: "Tandoori Paneer + Loaded Fries + Coke", price: 270 },
+          { name: "Make a Meal (Fries + Coke)", price: 70 }
         ]
       }
     }

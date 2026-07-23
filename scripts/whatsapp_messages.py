@@ -113,7 +113,7 @@ def main():
                 {"name": "Choco Lava Cake", "price": 70},
             ],
         },
-        "air_fried_available": true,
+        "air_fried_available": True,
         "air_fried_note": "We serve Air Fried options — same great taste, less oil. Perfect for health-conscious foodies.",
     }
 
