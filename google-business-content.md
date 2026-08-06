@@ -14,7 +14,7 @@ What makes us different:
 💸 Prices starting at just ₹60 — premium taste, street-food pricing
 📦 Combo meals from ₹180
 
-Open daily 5 PM to 1 AM. Walk in, call, or WhatsApp your order. 
+Open daily 5 PM to 12 AM. Walk in, call, or WhatsApp your order. 
 
 Located at The Burger Lab, Near Entry Gate No. 3, Besides Vegetable Shop, Amrapali Golf Homes Market, Sector 4, Greater Noida.
 
@@ -34,7 +34,7 @@ Q: Do you deliver or take online orders?
 A: Currently we operate as a walk-in and pickup cart. You can WhatsApp your order at 9205491224 for quick pickup. We're working on Swiggy/Zomato delivery — stay tuned!
 
 Q: What are your timings?
-A: We're open every single day, 5 PM to 1 AM. Late-night burger cravings? We've got you covered.
+A: We're open every single day, 5 PM to 12 AM. Late-night burger cravings? We've got you covered.
 
 Q: Do you cater for parties or bulk orders?
 A: Yes! For party/bulk orders (10+ items), WhatsApp us at 9205491224 at least 2 hours in advance and we'll have everything ready. Combo deals available for bulk.

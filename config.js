@@ -17,7 +17,7 @@ const BURGERLAB = {
     name: "The Burger Lab",
     phone: "9205491224",          // without country code, no spaces
     phoneDisplay: "9205491224",   // how it appears on the site
-    hours: "5PM – 1AM",
+    hours: "5PM – 12AM",
     hoursNote: "Open Daily",
     tagline: "Gourmet veg burgers, sandwiches & loaded fries — crafted fresh daily at Amrapali Golf Homes",
 

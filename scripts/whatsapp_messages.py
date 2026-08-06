@@ -86,7 +86,7 @@ def main():
         "whatsapp": "9205491224",
         "wa_link": "wa.me/919205491224",
         "whatsapp_group": "https://chat.whatsapp.com/ITnN3ll8cBiIFnEQysWuLu",
-        "business_hours": "5 PM - 1 AM",
+        "business_hours": "5 PM - 12 AM",
         "menu": {
             "bestsellers": [
                 {"name": "Tandoori Paneer Burger", "price": 140},

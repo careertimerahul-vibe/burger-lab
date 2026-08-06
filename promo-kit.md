@@ -10,7 +10,7 @@ Single source of truth for Burger Lab marketing messages. Business facts (links,
 - **WhatsApp group invite:** `https://chat.whatsapp.com/ITnN3ll8cBiIFnEQysWuLu`
 - **Address (marketing):** Near Entry Gate No. 3, Beside Vegetable Shop, Amrapali Golf Homes Market, Sector 4, Greater Noida
 - **Address (shop unit, config.js):** Shop C-29, Amrapali Golf Homes Market, Haibatpur, Sector 4, Greater Noida, UP 201016
-- **Hours:** 5 PM – 1 AM, open daily (config.js / README / whatsapp_messages.py all agree)
+- **Hours:** 5 PM – 12 AM, open daily
 - **Food court kitchen id:** 5 (live menu/prices ground truth: `menu_items` WHERE `kitchen_id=5` in the burgerlab DB)
 
 ## Drafting checklist — ALWAYS include
@@ -18,7 +18,7 @@ Single source of truth for Burger Lab marketing messages. Business facts (links,
 1. **Menu link** = native landing page `https://theburgerlabnoida.netlify.app/` — NEVER the food court deep link `aghfoodcourt.netlify.app/#kitchen/5`
 2. **WhatsApp group invite** (`https://chat.whatsapp.com/ITnN3ll8cBiIFnEQysWuLu`) as the engagement CTA — NEVER "Rate us on Google"
 3. **Ordering path** — WhatsApp order link `wa.me/919205491224`
-4. **Business facts** — hours (5 PM – 1 AM), 100% veg + air-fried, address when location matters
+4. **Business facts** — hours (5 PM – 12 AM), 100% veg + air-fried, address when location matters
 5. **Combo/offer prices from the LIVE menu** (query food court DB `menu_items` for kitchen_id=5) — never guess a price or combo
 
 ## NEVER

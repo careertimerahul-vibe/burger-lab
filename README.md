@@ -17,7 +17,7 @@ All files in: `/opt/data/projects/burger-lab/`
 ### 1. Google Business Profile — Critical Fixes
 ⬜ Add phone number: 9205491224
 ⬜ Add website: (your landing page URL once hosted)
-⬜ Fix operating hours: Mon-Sun 5PM-1AM (currently only Sunday shows)
+⬜ Fix operating hours: Mon-Sun 5PM-12AM (currently only Sunday shows)
 ⬜ Upload 10+ photos: food closeups, cart exterior, menu, you at work
 ⬜ Add business description → copy from `google-business-content.md`
 ⬜ Add secondary categories: Hamburger Restaurant, Sandwich Shop, Takeout
@@ -120,5 +120,5 @@ Rules for messages:
 
 1. "New on the menu: Paneer Garden Royale! Fresh paneer with garden veggies & our signature sauce. Try it tonight. 🍔"
 2. "Combo of the week: Tandoori Paneer Burger + Loaded Fries + Coke at just ₹270!"
-3. "Late-night hunger? We're open till 1AM, 7 days a week. Your midnight burger fix is here."
+3. "Late-night hunger? We're open till 12AM, 7 days a week. Your midnight burger fix is here."
 4. "5-star rated on Google! Thank you to everyone who left a review. You make our small business grow. ❤️"
