@@ -22,6 +22,7 @@
 
 ## Important Paths
 - Project root: /opt/data/projects/burger-lab
+- Promo kit & message drafting rules: /opt/data/projects/burger-lab/promo-kit.md
 - Cron docs: /opt/data/projects/burger-lab/cron
 - WhatsApp script: /opt/data/projects/burger-lab/scripts/whatsapp_messages.py
 - Digital presence docs: README.md and related setup docs in root
