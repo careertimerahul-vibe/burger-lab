@@ -31,12 +31,12 @@ Single source of truth for Burger Lab marketing messages. Business facts (links,
 
 ## Style
 
-- Short, WhatsApp-punchy, pun-filled, Hinglish casual
+- **Default language: English — short and simple.** Hinglish only if Rahul explicitly asks for it
+- Short, WhatsApp-punchy, pun-filled
 - Local hooks: evening cravings, weather (hazy/cloudy/rainy/monsoon), weekend mood, student/office crowd
 - Emojis generously — 1 per line minimum, visually scannable
 - Keep evergreen unless a dated campaign is requested
 - Deliver ready-to-send copy in a **code block** (copy-paste ready)
-- Offer variants when asked: WhatsApp (casual, Hinglish) + NBH (professional, English)
 
 ## Known combos (verify live before sending)
 
