@@ -22,7 +22,7 @@ import time
 import urllib.error
 import urllib.request
 from datetime import datetime, timedelta, timezone
-from urllib.parse import quote, urlencode
+from urllib.parse import urlencode
 
 BASE = os.environ.get("GROUP_POSTER_BASE", "/opt/data/projects/burger-lab")
 DATA = f"{BASE}/data"
@@ -123,7 +123,6 @@ def hhmm_today(s):
 # swaps {menu_url} / {order_url} for a version stamped with that group's utm_source.
 # That is the only way to tell afterwards which group sent the visit or the WhatsApp chat.
 MENU_BASE = "https://theburgerlabnoida.netlify.app/"
-ORDER_BASE = "https://wa.me/919205491224"
 INVITE_URL = "https://chat.whatsapp.com/ITnN3ll8cBiIFnEQysWuLu"
 
 
@@ -138,23 +137,20 @@ def render_text(msg, group, when=None):
     # Two params only — group code + post time. Everything else is noise in a chat bubble.
     query = urlencode({"utm_source": _group_slug(group), "utm_content": slot.replace(":", "")})
     menu = f"{MENU_BASE}?{query}"
-    # WhatsApp cannot carry UTMs to the server, so the tag travels as the prefilled first
-    # message: every chat that starts from a group post is labelled with that group.
-    label = group.get("tag") or group.get("label") or group.get("name") or _group_slug(group)
-    prefill = f"Hi! Saw your {label} post ({slot}). My order:"
-    order = f"{ORDER_BASE}?text={quote(prefill)}"
 
     text = msg.get("text") or ""
-    text = text.replace("{menu_url}", menu).replace("{order_url}", order)
+    text = text.replace("{menu_url}", menu)
     # Per-group policy: the invite only goes where the group allows it. Foodies and the
     # buy/sell group ban it outright, and our own group gains nothing from it.
     if group.get("append_invite") and group.get("allow_group_link"):
         text += f"\n\U0001F449 Offers & new drops first: {INVITE_URL}"
     if "{menu_url}" not in (msg.get("text") or ""):
         text = text.replace(MENU_BASE, menu)  # hand-written plain link -> still tagged
-    if "{order_url}" not in (msg.get("text") or ""):
-        text = re.sub(r"https?://wa\.me/919205491224(?!\?)", order.replace("\\", "\\\\"), text)
-    return text
+    # The site takes the order itself, so the WhatsApp order link is gone for good. Strip any
+    # line that still carries it (stale queue copy, old templates) rather than trusting the text.
+    kept = [l for l in text.split("\n")
+            if "wa.me/919205491224" not in l and "{order_url}" not in l]
+    return "\n".join(kept)
 
 
 def append_post(row):
@@ -448,11 +444,16 @@ def run(dry_run=False):
                         continue
                     if msg.get("group") and msg["group"] != g["jid"]:
                         continue
-                    # A broadcast belongs to a slot: a group that does not run that slot
-                    # (own-group = 17:00 + 23:00 only) is not a target for it.
-                    if not msg.get("group") and msg.get("slot") and g.get("slots") \
-                            and msg["slot"] not in g["slots"]:
-                        continue
+                    # A broadcast belongs to a slot. A group may run it at its own time
+                    # (foodies takes the 21:30 copy at 22:00 via slot_alias); if it neither
+                    # runs the slot nor aliases it, it is not a target.
+                    if not msg.get("group") and msg.get("slot") and g.get("slots"):
+                        if msg["slot"] not in g["slots"]:
+                            alias = (g.get("slot_alias") or {}).get(msg["slot"])
+                            if alias in g["slots"]:
+                                msg = dict(msg, slot=alias)
+                            else:
+                                continue
                     action, detail = evaluate(g, msg, now, dry_run)
                     if action == "send":
                         code, res = do_send(g, msg, dry_run)
@@ -493,7 +494,11 @@ def status():
             if m.get("group") and m["group"] != g["jid"]:
                 continue
             if not m.get("group") and m.get("slot") and g.get("slots") and m["slot"] not in g["slots"]:
-                continue  # broadcast for a slot this group does not run
+                alias = (g.get("slot_alias") or {}).get(m["slot"])
+                if alias in g["slots"]:
+                    m = dict(m, slot=alias)
+                else:
+                    continue  # broadcast for a slot this group does not run
             act, detail = evaluate(g, m, now)
             print(f"   #{m.get('id')} slot {m.get('slot')} [{m.get('status')}] -> {act} ({detail})")
             print(f"      {(m.get('text') or '')[:90]}...")

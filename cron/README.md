@@ -15,23 +15,27 @@
   promoted to `approved` on the next scheduler tick. Delete the flag (or set it false) to
   restore approve-by-numbers.
 
-- **One schedule for every group.** Each group in `data/groups.json` runs the same three
-  slots (17:00 / 20:00 / 21:30 IST, `max_per_day: 3`) so group performance is comparable.
+- **One schedule, one copy, per-group timing.** Three slots (17:00 / 20:00 / 21:30 IST,
+  `max_per_day: 3`) are drafted as one shared copy. A group may run a different set:
+  `slots` says what times it posts, `slot_alias` maps a shared slot onto its own time
+  (foodies takes the 21:30 copy at **22:00**, so its night is not cut off early).
 - **One copy, broadcast.** A queue message with `"group": null` is sent to every enabled
   group that runs that slot — the scheduler filters by each group's `slots`, so a group with
   a different rhythm simply does not receive it. Do not fork the copy per group; the only
   per-group difference is the link tag, applied at send time.
 - **The burger cart's own group is two posts a day.** `bl` runs 17:00 (shared opening copy)
-  and 23:00 (fixed "last 60 minutes / final orders" post). That 23:00 post is injected every
+  and 22:00 (fixed "last orders" post). That post is injected every
   day by `ensure_standing()` from `data/templates/bl_last_orders.txt` — the copy is never
   re-typed by the drafting model, and never paraphrased. `standing_messages` in groups.json
   is the hook; add an entry there for any future fixed daily post.
-- **Links are placeholders.** Drafts write `{menu_url}` and `{order_url}`; the scheduler
-  renders them per group in `render_text()`:
-  - menu: `…netlify.app/?utm_source=<code>&utm_content=<HHMM>` — two params only, 69 chars.
-  - order: `wa.me/919205491224?text=…` with a prefill that names the group and slot. WhatsApp
-    cannot carry UTMs server-side, so the prefill *is* the click attribution: a chat that
-    starts from a post arrives already labelled.
+- **No clock times in the copy.** One text lands at 21:30 in six groups and 22:00 in
+  foodies, so a line like "9:30 PM" or "last 30 minutes" is wrong somewhere. Drafts say
+  "tonight" / "before we close"; only the address line states opening hours.
+- **One link per post, labelled `Menu & Order`.** The site shows the menu and takes the
+  order, so one URL does both: drafts write `🍔 Menu & Order: {menu_url}` and nothing else.
+  The scheduler renders it per group as `…netlify.app/?utm_source=<code>&utm_content=<HHMM>`
+  — two params only, 69 chars. Two links (or a separate `wa.me/919205491224`) are banned;
+  any line still carrying a wa.me link is stripped at send time.
 - **Group codes** live in `groups.json` as `utm_source`: `fg` = FOODIES OF GHKW,
   `ag` = AGHKW Advertising, `gm` = Golf Homes Marketplace, `gp` = GHKW Ads Premium,
   `mc` = GH Marketplace Community, `ka` = AGH Kingswood Ads, `bl` = The Burger Lab.
