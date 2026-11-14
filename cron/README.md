@@ -79,6 +79,22 @@ curl -s -X POST localhost:8631/send -H "x-bot-token: $(cat data/bot_token.txt)" 
 # -> {"error":"jid_not_allowed"} 403
 ```
 
+## Sending on demand — wait, never skip
+
+A group that is mid-conversation must never be dropped, only waited for. `scripts/send_now.py`
+therefore does not send; it appends one approved queue message per target group
+(`"group": <jid>`, slot = now) and the scheduler polls that group every tick until its gate
+clears, then posts:
+
+```bash
+/opt/data/venvs/crypto/bin/python scripts/send_now.py \
+  --text-file /tmp/copy.txt --image data/content_inbox/<day>/<file>.jpg --to fg,ag
+# --missing-today = every enabled group that has not posted today; --to all = everyone
+```
+
+A queued message only dies unsent at the group's own cutoff (23:30) or daily cap, or if it is
+still waiting 90 minutes after its slot — never because the group happened to be busy.
+
 ## Monitoring: two layers, both self-healing
 
 ```
