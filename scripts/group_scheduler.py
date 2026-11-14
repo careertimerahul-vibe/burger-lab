@@ -224,6 +224,16 @@ def evaluate(group, msg, now, dry_run=False):
     if posts_today(group["jid"], today) >= group.get("max_per_day", 3):
         return "skip", "daily_cap"
 
+    # A slot that missed its window must expire, not slide for hours: a paused queue used to
+    # flush breakfast posts at lunchtime. Checked before the spacing wait so a stale message
+    # expires now instead of holding a "wait" slot. Allowance is our own spacing rule plus a
+    # margin, so a normal gate/spacing delay never self-expires.
+    max_late = group.get("max_late_min") or (group.get("own_post_spacing_min", 60) + 30)
+    slot_at = hhmm_today(msg.get("slot") or group["slots"][0])
+    late_min = int((now - slot_at).total_seconds() // 60)
+    if late_min > max_late:
+        return "expire", f"stale_slot(+{late_min}m>max{max_late}m)"
+
     elig = eligible_at(msg, group, today)
     if now < elig:
         return "wait", f"eligible {elig:%d %b %H:%M}"
