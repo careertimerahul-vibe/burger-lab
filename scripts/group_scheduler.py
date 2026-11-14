@@ -60,6 +60,36 @@ def save_queue(q):
     os.replace(tmp, QUEUE)
 
 
+def load_config():
+    """Poster-level switches (data/poster_config.json). Missing file = manual approval."""
+    p = f"{DATA}/poster_config.json"
+    if not os.path.exists(p):
+        return {}
+    try:
+        return json.load(open(p))
+    except Exception:
+        return {}
+
+
+def auto_approve(queue):
+    """Promote pending drafts to approved when the poster runs hands-off.
+
+    Rahul's standing instruction (2026-11-14): nothing waits for him any more. Drafting and
+    posting still stay separate — the 16:30 job writes the copy, this promotes it — so the
+    three-part stack and the send-time checks are unchanged.
+    """
+    if not load_config().get("auto_approve"):
+        return 0
+    hit = 0
+    for m in queue.get("messages", []):
+        if m.get("status") == "pending":
+            m["status"] = "approved"
+            hit += 1
+    if hit:
+        save_queue(queue)
+    return hit
+
+
 def token():
     return open(TOKEN_FILE).read().strip() if os.path.exists(TOKEN_FILE) else ""
 
@@ -360,6 +390,9 @@ def run(dry_run=False):
                 continue
             groups = load_groups()
             queue = load_queue()
+            promoted = auto_approve(queue)
+            if promoted:
+                print(f"[{now_ist():%H:%M:%S}] auto-approved {promoted} pending message(s)", flush=True)
             if not groups or not queue.get("messages"):
                 time.sleep(POLL_SEC)
                 continue

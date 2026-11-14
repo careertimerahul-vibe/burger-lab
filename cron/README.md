@@ -9,6 +9,12 @@
 
 ## Slots, shared copy, link tagging
 
+- **Hands off since 2026-11-14.** `data/poster_config.json` sets `auto_approve: true`, so the
+  16:30 draft job writes the day's three messages already approved and the scheduler posts
+  them at 17:00 / 20:00 / 21:30 without waiting for a reply. Anything left `pending` is
+  promoted to `approved` on the next scheduler tick. Delete the flag (or set it false) to
+  restore approve-by-numbers.
+
 - **One schedule for every group.** Each group in `data/groups.json` runs the same three
   slots (17:00 / 20:00 / 21:30 IST, `max_per_day: 3`) so group performance is comparable.
 - **One copy, broadcast.** A queue message with `"group": null` is sent to every enabled
