@@ -1,7 +1,10 @@
 .netlify/
 
 # Runtime state, credentials and customer data — never commit these
-data/
+data/*
+# ...but approved copy templates are source, not state: the 23:00 last-orders post
+# is injected from here every night, so losing the file silently kills the post.
+!data/templates/
 *.session
 wa-session*/
 bot_token.txt

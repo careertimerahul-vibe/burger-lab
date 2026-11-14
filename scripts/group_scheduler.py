@@ -367,6 +367,45 @@ def do_send(group, msg, dry_run=False):
     return code, res
 
 
+def ensure_standing(queue, groups, today):
+    """Inject each group's fixed daily messages (e.g. The Burger Lab's last-orders post).
+
+    The copy lives in a template file, not in the queue, so nobody re-types it and the model
+    never paraphrases it. Idempotent: keyed on group + source label + date.
+    """
+    added = 0
+    # Yesterday's queue must not block today's injection, so only same-day entries count.
+    have = ({(m.get("group"), m.get("source")) for m in queue.get("messages", [])}
+            if queue.get("date") == today else set())
+    next_id = max([m.get("id") for m in queue["messages"] if isinstance(m.get("id"), int)] or [0]) + 1
+    for g in groups:
+        for s in g.get("standing_messages") or []:
+            tpl = s.get("template")
+            if not tpl or not os.path.exists(tpl):
+                continue
+            key = (g["jid"], s.get("label") or f"standing-{s.get('slot')}")
+            if key in have:
+                continue
+            text = open(tpl, encoding="utf-8").read().rstrip("\n")
+            queue["messages"].append({
+                "id": next_id,
+                "group": g["jid"],
+                "slot": s["slot"],
+                "not_before": f"{today} {s['slot']}",
+                "status": "approved",
+                "lang": "en",
+                "image": s.get("image"),
+                "text": text,
+                "source": s.get("label") or f"standing-{s['slot']}",
+            })
+            print(f"injected standing message #{next_id} for {g.get('name')} at {s['slot']}", flush=True)
+            next_id += 1
+            added += 1
+    if added:
+        save_queue(queue)
+    return added
+
+
 def run(dry_run=False):
     # Single-instance lock: two schedulers would double-post.
     import fcntl
@@ -389,10 +428,16 @@ def run(dry_run=False):
                 time.sleep(POLL_SEC)
                 continue
             groups = load_groups()
+            today = now_ist().strftime("%Y-%m-%d")
             queue = load_queue()
+            if queue.get("date") != today:
+                # A new day: yesterday's leftovers must never fire against today's slots.
+                queue = {"date": today, "note": "new day — awaiting the 16:30 draft", "messages": []}
+                save_queue(queue)
             promoted = auto_approve(queue)
             if promoted:
                 print(f"[{now_ist():%H:%M:%S}] auto-approved {promoted} pending message(s)", flush=True)
+            ensure_standing(queue, groups, today)
             if not groups or not queue.get("messages"):
                 time.sleep(POLL_SEC)
                 continue
@@ -402,6 +447,11 @@ def run(dry_run=False):
                     if msg.get("status") != "approved":
                         continue
                     if msg.get("group") and msg["group"] != g["jid"]:
+                        continue
+                    # A broadcast belongs to a slot: a group that does not run that slot
+                    # (own-group = 17:00 + 23:00 only) is not a target for it.
+                    if not msg.get("group") and msg.get("slot") and g.get("slots") \
+                            and msg["slot"] not in g["slots"]:
                         continue
                     action, detail = evaluate(g, msg, now, dry_run)
                     if action == "send":
@@ -442,6 +492,8 @@ def status():
         for m in queue.get("messages", []):
             if m.get("group") and m["group"] != g["jid"]:
                 continue
+            if not m.get("group") and m.get("slot") and g.get("slots") and m["slot"] not in g["slots"]:
+                continue  # broadcast for a slot this group does not run
             act, detail = evaluate(g, m, now)
             print(f"   #{m.get('id')} slot {m.get('slot')} [{m.get('status')}] -> {act} ({detail})")
             print(f"      {(m.get('text') or '')[:90]}...")

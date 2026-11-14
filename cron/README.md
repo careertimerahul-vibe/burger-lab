@@ -18,8 +18,14 @@
 - **One schedule for every group.** Each group in `data/groups.json` runs the same three
   slots (17:00 / 20:00 / 21:30 IST, `max_per_day: 3`) so group performance is comparable.
 - **One copy, broadcast.** A queue message with `"group": null` is sent to every enabled
-  group at its slot. Do not fork the copy per group — the only per-group difference is the
-  link tag, and that is applied at send time.
+  group that runs that slot — the scheduler filters by each group's `slots`, so a group with
+  a different rhythm simply does not receive it. Do not fork the copy per group; the only
+  per-group difference is the link tag, applied at send time.
+- **The burger cart's own group is two posts a day.** `bl` runs 17:00 (shared opening copy)
+  and 23:00 (fixed "last 60 minutes / final orders" post). That 23:00 post is injected every
+  day by `ensure_standing()` from `data/templates/bl_last_orders.txt` — the copy is never
+  re-typed by the drafting model, and never paraphrased. `standing_messages` in groups.json
+  is the hook; add an entry there for any future fixed daily post.
 - **Links are placeholders.** Drafts write `{menu_url}` and `{order_url}`; the scheduler
   renders them per group in `render_text()`:
   - menu: `…netlify.app/?utm_source=<code>&utm_content=<HHMM>` — two params only, 69 chars.
