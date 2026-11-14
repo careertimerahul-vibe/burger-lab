@@ -32,4 +32,17 @@
 ## Commands
 - Inspect README.md before changing business info.
 - For cron/script edits, run the script or a safe dry run where possible.
+- Watchdog tests: `python3 -m unittest discover -s scripts/tests -p "test_*.py"`.
 - This project may be a separate git repo/submodule; commit from inside the project root if needed.
+
+## Monitoring (do not weaken)
+- The group poster is watched by two layers — `scripts/keepalive_group_bot.py` (heals
+  sender :8631 + scheduler, writes `data/watchdog.heartbeat.json`) and
+  `scripts/watchdog_guard.py` (alerts and revives the watchdog). Contract, cron IDs and
+  test commands: `cron/README.md`.
+- Never identify a process with `pgrep -f "group_scheduler.py run"` — Food Court runs the
+  same script name. Use the flock in `data/group_scheduler.lock` plus cmdline **and** cwd.
+- Cron entry points must exist in `/opt/data/scripts/` (that is where Hermes resolves
+  `no_agent` scripts); the logic stays in this repo behind a thin wrapper.
+- A heal that is not verified (process still alive after the settle window) is not a heal.
+
