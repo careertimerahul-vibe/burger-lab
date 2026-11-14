@@ -1,1 +1,19 @@
 .netlify/
+
+# Runtime state, credentials and customer data — never commit these
+data/
+*.session
+wa-session*/
+bot_token.txt
+image_descriptions.json
+group_posts.csv
+
+# Python / node noise
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+*.log
+
+# OS
+.DS_Store

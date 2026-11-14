@@ -15,6 +15,7 @@ Commands
 import csv
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -43,7 +44,7 @@ def now_ist():
 def load_groups():
     if not os.path.exists(GROUPS):
         return []
-    return [g for g in json.load(open(GROUPS)) if g.get("enabled", True)]
+    return [g for g in json.load(open(GROUPS)) if g.get("enabled", True) and g.get("jid")]
 
 
 def load_queue():
@@ -120,6 +121,83 @@ def posts_today(group_jid, today):
 
 
 # ---------- core ----------
+def blocked_hits(text):
+    """Fail-closed check: any blocklisted item name in the message cancels the send."""
+    p = f"{DATA}/menu_blocklist.json"
+    if not os.path.exists(p):
+        return ""
+    try:
+        items = json.load(open(p)).get("blocked_items", [])
+    except Exception:
+        return ""
+    t = (text or "").lower()
+    for i in items:
+        if i.lower() in t:
+            return i
+    return ""
+
+
+def item_names_in(text):
+    """Caption discipline: when a photo is attached the caption stays item-agnostic,
+    so any specific menu item name is a hard block."""
+    p = f"{DATA}/menu_item_names.json"
+    if not os.path.exists(p):
+        return ""
+    try:
+        names = json.load(open(p)).get("names", [])
+    except Exception:
+        return ""
+    t = (text or "").lower()
+    for n in names:
+        if n.lower() in t:
+            return n
+    return ""
+
+
+def is_crowd_photo(image_path):
+    """True only when the photo actually shows people/queue — 'no people visible' does not count."""
+    if not image_path:
+        return False
+    p = f"{DATA}/image_descriptions.json"
+    if not os.path.exists(p):
+        return False
+    try:
+        d = json.load(open(p))
+    except Exception:
+        return False
+    desc = (d.get(os.path.basename(image_path), {}) or {}).get("desc", "").lower()
+    desc = re.sub(r"no\s+(people|persons?|customers?|crowd|one)\b", " ", desc)
+    desc = desc.replace("nobody", " ")
+    positive = ("crowd", "queue", "customers", "people standing", "people waiting",
+                "people visible", "several people", "multiple people", "backs turned",
+                "people, backs", "persons")
+    return any(k in desc for k in positive) or bool(re.search(r"\bpeople\b", desc))
+
+
+def missing_crowd_line(text):
+    """Crowd photos need a line about the crowd; a caption that ignores them wastes the shot."""
+    t = (text or "").lower()
+    cues = ("crowd", "queue", "fans", "waiting", "rush", "regulars", "doesn't lie",
+            "does not lie", "that's the review", "thats the review")
+    if any(c in t for c in cues):
+        return False
+    return not re.search(r"\bline\b", t)
+
+
+def link_violation(text, group):
+    """Invite links are allowed by DEFAULT; only groups that ban them block the send."""
+    t = (text or "").lower()
+    invites = ("chat.whatsapp.com", "whatsapp.com/channel", "wa.me/message")
+    if not group.get("allow_group_link", True):
+        for i in invites:
+            if i in t:
+                return f"group_invite_link({i})"
+    if not group.get("allow_links", True):
+        if "http://" in t or "https://" in t:
+            return "links_not_allowed"
+    return ""
+
+
 def eligible_at(msg, group, today):
     """When this message may post: its slot, its not_before floor, pushed by our spacing rule."""
     slot = hhmm_today(msg.get("slot") or group["slots"][0])
@@ -155,6 +233,21 @@ def evaluate(group, msg, now, dry_run=False):
     code, st = api(f"/status?jid={group['jid']}")
     if code != 200 or not st.get("connected"):
         return "wait", f"bot_unreachable({code})"
+
+    bad = blocked_hits(msg.get("text", ""))
+    if bad:
+        return "block", f"blocked_item={bad}"
+
+    lv = link_violation(msg.get("text", ""), group)
+    if lv:
+        return "block", lv
+
+    if msg.get("image"):
+        named = item_names_in(msg.get("text", ""))
+        if named:
+            return "block", f"caption_not_agnostic names={named}"
+        if is_crowd_photo(msg.get("image")) and missing_crowd_line(msg.get("text", "")):
+            return "block", "crowd_photo_needs_crowd_line"
 
     age = st.get("age_sec")
     if age is None:
@@ -193,6 +286,20 @@ def do_send(group, msg, dry_run=False):
 
 
 def run(dry_run=False):
+    # Single-instance lock: two schedulers would double-post.
+    import fcntl
+    lock_path = os.path.join(DATA, "group_scheduler.lock")
+    # 'a+' so a losing instance cannot truncate the winner's pid before failing.
+    lock_fh = open(lock_path, "a+")
+    try:
+        fcntl.flock(lock_fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        print("another scheduler already holds the lock — exiting")
+        return
+    lock_fh.seek(0)
+    lock_fh.truncate()
+    lock_fh.write(str(os.getpid()))
+    lock_fh.flush()
     print(f"scheduler up (dry_run={dry_run}) — IST {now_ist():%Y-%m-%d %H:%M:%S}")
     while True:
         try:
@@ -226,6 +333,11 @@ def run(dry_run=False):
                         save_queue(queue)
                         append_post({"date": now.strftime("%Y-%m-%d"), "group": g["jid"], "msg_id": msg.get("id"), "slot": msg.get("slot"), "eligible_at": "", "sent_at": "", "age_at_send": "", "message_id": "", "status": "expired", "error": detail})
                         print(f"[{now:%H:%M:%S}] {g['name']} msg#{msg.get('id')} EXPIRED ({detail})")
+                    elif action == "block":
+                        msg["status"] = "blocked"
+                        save_queue(queue)
+                        append_post({"date": now.strftime("%Y-%m-%d"), "group": g["jid"], "msg_id": msg.get("id"), "slot": msg.get("slot"), "eligible_at": "", "sent_at": "", "age_at_send": "", "message_id": "", "status": "blocked", "error": detail})
+                        print(f"[{now:%H:%M:%S}] {g['name']} msg#{msg.get('id')} BLOCKED ({detail})")
         except Exception as e:
             print("loop_error", e)
         time.sleep(POLL_SEC)
@@ -269,6 +381,14 @@ def post_now(mid, force=False, dry_run=False):
         if m.get("id") != int(mid):
             continue
         g = groups.get(m.get("group")) or list(groups.values())[0]
+        bad = blocked_hits(m.get("text", ""))
+        if bad and not force:
+            print(f"BLOCKED: message mentions '{bad}' (blocklisted). Use --force to override.")
+            return
+        lv = link_violation(m.get("text", ""), g)
+        if lv and not force:
+            print(f"BLOCKED: {lv} — this group bans invite links. Use --force only if the group allows it.")
+            return
         payload = {"jid": g["jid"], "text": m["text"], "image_path": m.get("image"),
                    "min_age_sec": int(g.get("min_gap_min", 16) * 60), "force": force, "dry_run": dry_run}
         code, res = api("/send", payload)

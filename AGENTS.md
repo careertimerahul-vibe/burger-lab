@@ -1,5 +1,7 @@
 # AGENTS.md — The Burger Lab
 
+> Shared rules (tools, safety, output, paths): `/opt/data/projects/_shared/AGENTS.md`
+
 ## Project
 100% vegetarian food cart/brand in Greater Noida focused on flavorful, late-evening food, WhatsApp marketing, Google Business Profile, and local growth.
 
@@ -31,23 +33,3 @@
 - Inspect README.md before changing business info.
 - For cron/script edits, run the script or a safe dry run where possible.
 - This project may be a separate git repo/submodule; commit from inside the project root if needed.
-
-## Model Preferences
-- Default: openrouter/z-ai/glm-4.5-air:free for marketing/content; use stronger model only for complex strategy or code fixes.
-- Prefer free GLM models for simple drafting, review, and planning.
-- Use stronger paid/reliable models only when accuracy, coding, or complex reasoning requires it.
-
-## Tools and Integrations
-- Use file tools for reading/writing project files.
-- Use terminal only for commands, tests, scripts, git, and runtime checks.
-- Use web/browser only when current external information or a logged-in web session is required.
-
-## Safety and Approval
-- Do not perform destructive operations without explicit user approval.
-- Do not publish, send, submit, trade, deploy, or commit unless the user explicitly asks.
-- After modifying tracked files, ask whether to commit and push.
-
-## Output Standards
-- Be direct and plain-English.
-- Mention files changed with absolute paths.
-- State verification performed or clearly say what was not verified.

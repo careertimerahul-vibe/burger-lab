@@ -15,8 +15,10 @@ Single source of truth for Burger Lab marketing messages. Business facts (links,
 
 ## Drafting checklist — ALWAYS include
 
+0. **Crowd photos get a crowd line.** Whenever the attached photo shows people, a queue or the cart itself, the caption must carry a line about them — "the crowd doesn't lie", "same scene every evening: burger fans, no empty chairs", "look at the line, that's the review". Never describe the crowd in a way the photo contradicts.
+
 1. **Menu link** = native landing page `https://theburgerlabnoida.netlify.app/` — NEVER the food court deep link `aghfoodcourt.netlify.app/#kitchen/5`
-2. **WhatsApp group invite** (`https://chat.whatsapp.com/ITnN3ll8cBiIFnEQysWuLu`) as the engagement CTA — NEVER "Rate us on Google"
+2. **WhatsApp group invite** (`https://chat.whatsapp.com/ITnN3ll8cBiIFnEQysWuLu`) as the engagement CTA — NEVER "Rate us on Google". **Exception:** two groups ban external invite links (FOODIES OF GHKW, AGHKW ADVERTISING GROUP) — there the invite is omitted and the menu link carries the CTA. Every other group gets the invite. Machine-enforced via `allow_group_link` in `data/groups.json` (default for a new group: allowed).
 3. **Ordering path** — WhatsApp order link `wa.me/919205491224`
 4. **Business facts** — hours (5 PM – 12 AM), 100% veg + air-fried, address when location matters
 5. **Combo/offer prices from the LIVE menu** (query food court DB `menu_items` for kitchen_id=5) — never guess a price or combo
@@ -24,6 +26,7 @@ Single source of truth for Burger Lab marketing messages. Business facts (links,
 ## NEVER
 
 - Non-veg references — brand is strictly vegetarian, zero exceptions
+- **Grilled Pineapple — never promoted in any message** (Rahul, 13 Nov 2026). Machine-enforced: `data/menu_blocklist.json` + a fail-closed check in `scripts/group_scheduler.py`. Add future exclusions to that JSON, not here.
 - "Rate us on Google" — group invite is the CTA instead
 - Food court deep link `#kitchen/5` — native landing page only
 - Fabricated prices, combos, phone numbers, or emails
