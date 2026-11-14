@@ -21,10 +21,57 @@
     cannot carry UTMs server-side, so the prefill *is* the click attribution: a chat that
     starts from a post arrives already labelled.
 - **Group codes** live in `groups.json` as `utm_source`: `fg` = FOODIES OF GHKW,
-  `ag` = AGHKW Advertising. Add the code with any new group or its traffic is unattributable.
+  `ag` = AGHKW Advertising, `gm` = Golf Homes Marketplace, `gp` = GHKW Ads Premium,
+  `mc` = GH Marketplace Community, `ka` = AGH Kingswood Ads, `bl` = The Burger Lab.
+  Add the code with any new group or its traffic is unattributable.
+- **Each group carries its own rules in `groups.json`** — the gate length and whether the
+  WhatsApp invite link may appear are properties of the group, not of the message:
+
+  | code | group | quiet gate | invite link |
+  |------|-------|-----------|-------------|
+  | `ag` | AGHKW Advertising (Buy/sell) | 1,800s (30 min) | banned |
+  | `fg` | FOODIES OF GHKW | 960s (16 min) | banned |
+  | `bl` | The Burger Lab (own group) | 960s (16 min) | not used |
+  | `gm` `gp` `mc` `ka` `gh` | the five marketplace/community groups | none | allowed |
+
+  A gate is a promise to the group, so `hard_gate: true` on `ag`/`fg`/`bl` means nothing may
+  override it — not `post-now --force`, not a "send it now" instruction; the scheduler
+  refuses and says so. Posting into a live conversation is what gets a number muted.
+- **The invite link is appended per group, not baked into the copy.** `render_text()` adds
+  one line with `chat.whatsapp.com/...` only where `append_invite` and `allow_group_link` are
+  both true — i.e. the five open groups. Shared copy stays identical everywhere else, so
+  group performance is still comparable.
 - `data/group_posts.csv` logs `utm_source` per send, so every post is traceable to a group.
+- `gh` = 🥰Golf homes (92) — a general Golf Homes chat, enabled 2026-11-14 on instruction.
 - The landing page has **no analytics** yet: the UTMs are in the links but nothing reads them.
   Click attribution today comes from the WhatsApp prefill.
+
+## Only verified groups can receive a post
+
+`data/groups.json` is the verification file — one entry per WhatsApp group the number is in.
+An entry with `"enabled": true` **and** a `jid` is verified; everything else is refused.
+
+Enforcement lives in the sender (`wa_group_bot.mjs` + `send_policy.mjs`), not the scheduler,
+so nothing upstream can talk it out of the rule:
+
+1. **jid shape** — only `120363…@g.us` group jids; DMs and broadcasts are unreachable.
+2. **frozen allowlist** — built once at startup from every `enabled != false` entry. An unknown
+   jid, or a jid belonging to a disabled entry, gets `403 jid_not_allowed`. `force` bypasses the
+   timing gate only, never the allowlist.
+3. **identity** — `--expect-number 919205491224`: if a different WhatsApp account is linked, the
+   sender reports `wrong_number_linked` and refuses.
+
+Fail-closed: if the allowlist file is unreadable or has no jids, the sender refuses to start
+(`FATAL … refusing to run unguarded`) instead of running wide open. Revoking a group = set
+`"enabled": false` and restart the sender (`./scripts/start_group_bot.sh`); the watchdog does it
+on the next heal cycle. Verify with:
+
+```bash
+curl -s -X POST localhost:8631/send -H "x-bot-token: $(cat data/bot_token.txt)" \
+  -H 'Content-Type: application/json' \
+  -d '{"jid":"120363999999999999@g.us","text":"probe","dry_run":true,"force":true}'
+# -> {"error":"jid_not_allowed"} 403
+```
 
 ## Monitoring: two layers, both self-healing
 

@@ -94,6 +94,7 @@ def hhmm_today(s):
 # That is the only way to tell afterwards which group sent the visit or the WhatsApp chat.
 MENU_BASE = "https://theburgerlabnoida.netlify.app/"
 ORDER_BASE = "https://wa.me/919205491224"
+INVITE_URL = "https://chat.whatsapp.com/ITnN3ll8cBiIFnEQysWuLu"
 
 
 def _group_slug(group):
@@ -115,6 +116,10 @@ def render_text(msg, group, when=None):
 
     text = msg.get("text") or ""
     text = text.replace("{menu_url}", menu).replace("{order_url}", order)
+    # Per-group policy: the invite only goes where the group allows it. Foodies and the
+    # buy/sell group ban it outright, and our own group gains nothing from it.
+    if group.get("append_invite") and group.get("allow_group_link"):
+        text += f"\n\U0001F449 Offers & new drops first: {INVITE_URL}"
     if "{menu_url}" not in (msg.get("text") or ""):
         text = text.replace(MENU_BASE, menu)  # hand-written plain link -> still tagged
     if "{order_url}" not in (msg.get("text") or ""):
@@ -421,6 +426,16 @@ def mark(ids, new_status):
     print(f"{hit} message(s) -> {new_status}")
 
 
+def gate_is_hard(group):
+    """The quiet gate is a promise made to the group, not a suggestion.
+
+    Every group posts only after `min_gap_min` minutes of silence. Nothing in this
+    scheduler may override that — an ad dropped into a live conversation is what gets a
+    number muted or reported. --force therefore refuses on a hard-gated group.
+    """
+    return group.get("hard_gate", True)
+
+
 def post_now(mid, force=False, dry_run=False):
     queue = load_queue()
     groups = {g["jid"]: g for g in load_groups()}
@@ -428,6 +443,10 @@ def post_now(mid, force=False, dry_run=False):
         if m.get("id") != int(mid):
             continue
         g = groups.get(m.get("group")) or list(groups.values())[0]
+        if force and gate_is_hard(g):
+            print(f"REFUSED: {g.get('name')} is hard-gated — post waits for "
+                  f"{int(g.get('min_gap_min', 16))} min of quiet. --force cannot override it.")
+            return
         bad = blocked_hits(m.get("text", ""))
         if bad and not force:
             print(f"BLOCKED: message mentions '{bad}' (blocklisted). Use --force to override.")

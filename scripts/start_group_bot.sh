@@ -24,7 +24,10 @@ if command -v fuser >/dev/null 2>&1; then
 fi
 
 cd "$BRIDGE" || exit 1
-nohup node wa_group_bot.mjs --session "$DATA/wa-session-8" --port 8631 >> "$LOG" 2>&1 &
+# Fail-closed guards: only groups.json entries with enabled != false are sendable, and the
+# linked account must still be the brand number. Both are checks in the sender itself.
+nohup node wa_group_bot.mjs --session "$DATA/wa-session-8" --port 8631 \
+  --data "$DATA" --allowlist "$DATA/groups.json" --expect-number 919205491224 >> "$LOG" 2>&1 &
 echo $! > "$PIDFILE"
 sleep 4
 if curl -sf -m 5 http://127.0.0.1:8631/health >/dev/null; then
