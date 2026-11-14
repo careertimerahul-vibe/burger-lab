@@ -7,6 +7,25 @@
 | 260ad48c02bf | Watchdog guard | every 15 min | Watches the watchdog: stale heartbeat or a failing watchdog job → alert |
 | bb3b2f1e6b39 | Burger Lab WhatsApp Messages | 17:00 IST daily | Generates 3 WhatsApp marketing messages (weather/day aware) |
 
+## Slots, shared copy, link tagging
+
+- **One schedule for every group.** Each group in `data/groups.json` runs the same three
+  slots (17:00 / 20:00 / 21:30 IST, `max_per_day: 3`) so group performance is comparable.
+- **One copy, broadcast.** A queue message with `"group": null` is sent to every enabled
+  group at its slot. Do not fork the copy per group — the only per-group difference is the
+  link tag, and that is applied at send time.
+- **Links are placeholders.** Drafts write `{menu_url}` and `{order_url}`; the scheduler
+  renders them per group in `render_text()`:
+  - menu: `…netlify.app/?utm_source=<code>&utm_content=<HHMM>` — two params only, 69 chars.
+  - order: `wa.me/919205491224?text=…` with a prefill that names the group and slot. WhatsApp
+    cannot carry UTMs server-side, so the prefill *is* the click attribution: a chat that
+    starts from a post arrives already labelled.
+- **Group codes** live in `groups.json` as `utm_source`: `fg` = FOODIES OF GHKW,
+  `ag` = AGHKW Advertising. Add the code with any new group or its traffic is unattributable.
+- `data/group_posts.csv` logs `utm_source` per send, so every post is traceable to a group.
+- The landing page has **no analytics** yet: the UTMs are in the links but nothing reads them.
+  Click attribution today comes from the WhatsApp prefill.
+
 ## Monitoring: two layers, both self-healing
 
 ```

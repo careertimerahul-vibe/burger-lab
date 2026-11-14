@@ -22,6 +22,7 @@ import time
 import urllib.error
 import urllib.request
 from datetime import datetime, timedelta, timezone
+from urllib.parse import quote, urlencode
 
 BASE = os.environ.get("GROUP_POSTER_BASE", "/opt/data/projects/burger-lab")
 DATA = f"{BASE}/data"
@@ -87,10 +88,44 @@ def hhmm_today(s):
     return now_ist().replace(hour=h, minute=m, second=0, microsecond=0)
 
 
+# ---------- per-group link tagging ----------
+# One approved copy is reused in every group, so the links are templated: the scheduler
+# swaps {menu_url} / {order_url} for a version stamped with that group's utm_source.
+# That is the only way to tell afterwards which group sent the visit or the WhatsApp chat.
+MENU_BASE = "https://theburgerlabnoida.netlify.app/"
+ORDER_BASE = "https://wa.me/919205491224"
+
+
+def _group_slug(group):
+    return group.get("utm_source") or re.sub(r"[^a-z0-9]+", "_", group.get("name", "group").lower()).strip("_")
+
+
+def render_text(msg, group, when=None):
+    """Message text for THIS group: menu link and WhatsApp link carry the group's UTMs."""
+    when = when or now_ist()
+    slot = msg.get("slot") or (group.get("slots") or ["17:00"])[0]
+    # Two params only — group code + post time. Everything else is noise in a chat bubble.
+    query = urlencode({"utm_source": _group_slug(group), "utm_content": slot.replace(":", "")})
+    menu = f"{MENU_BASE}?{query}"
+    # WhatsApp cannot carry UTMs to the server, so the tag travels as the prefilled first
+    # message: every chat that starts from a group post is labelled with that group.
+    label = group.get("tag") or group.get("label") or group.get("name") or _group_slug(group)
+    prefill = f"Hi! Saw your {label} post ({slot}). My order:"
+    order = f"{ORDER_BASE}?text={quote(prefill)}"
+
+    text = msg.get("text") or ""
+    text = text.replace("{menu_url}", menu).replace("{order_url}", order)
+    if "{menu_url}" not in (msg.get("text") or ""):
+        text = text.replace(MENU_BASE, menu)  # hand-written plain link -> still tagged
+    if "{order_url}" not in (msg.get("text") or ""):
+        text = re.sub(r"https?://wa\.me/919205491224(?!\?)", order.replace("\\", "\\\\"), text)
+    return text
+
+
 def append_post(row):
     new = not os.path.exists(POSTS)
     with open(POSTS, "a", newline="", encoding="utf-8") as fh:
-        w = csv.DictWriter(fh, fieldnames=["date", "group", "msg_id", "slot", "eligible_at", "sent_at", "age_at_send", "message_id", "status", "error"])
+        w = csv.DictWriter(fh, fieldnames=["date", "group", "utm_source", "msg_id", "slot", "eligible_at", "sent_at", "age_at_send", "message_id", "status", "error"])
         if new:
             w.writeheader()
         w.writerow(row)
@@ -218,6 +253,7 @@ def eligible_at(msg, group, today):
 def evaluate(group, msg, now, dry_run=False):
     """Return (action, detail)."""
     today = now.strftime("%Y-%m-%d")
+    text = render_text(msg, group, now)
     gate_sec = int(group.get("min_gap_min", 16) * 60)
     cutoff = hhmm_today(group.get("cutoff", "23:30"))
 
@@ -244,19 +280,19 @@ def evaluate(group, msg, now, dry_run=False):
     if code != 200 or not st.get("connected"):
         return "wait", f"bot_unreachable({code})"
 
-    bad = blocked_hits(msg.get("text", ""))
+    bad = blocked_hits(text)
     if bad:
         return "block", f"blocked_item={bad}"
 
-    lv = link_violation(msg.get("text", ""), group)
+    lv = link_violation(text, group)
     if lv:
         return "block", lv
 
     if msg.get("image"):
-        named = item_names_in(msg.get("text", ""))
+        named = item_names_in(text)
         if named:
             return "block", f"caption_not_agnostic names={named}"
-        if is_crowd_photo(msg.get("image")) and missing_crowd_line(msg.get("text", "")):
+        if is_crowd_photo(msg.get("image")) and missing_crowd_line(text):
             return "block", "crowd_photo_needs_crowd_line"
 
     age = st.get("age_sec")
@@ -273,7 +309,7 @@ def do_send(group, msg, dry_run=False):
     today = now_ist().strftime("%Y-%m-%d")
     payload = {
         "jid": group["jid"],
-        "text": msg["text"],
+        "text": render_text(msg, group),
         "image_path": msg.get("image"),
         "min_age_sec": int(group.get("min_gap_min", 16) * 60),
         "dry_run": dry_run,
@@ -282,6 +318,7 @@ def do_send(group, msg, dry_run=False):
     row = {
         "date": today,
         "group": group["jid"],
+        "utm_source": _group_slug(group),
         "msg_id": msg.get("id"),
         "slot": msg.get("slot"),
         "eligible_at": "",
@@ -341,12 +378,12 @@ def run(dry_run=False):
                     elif action == "expire" and msg.get("status") == "approved":
                         msg["status"] = "expired"
                         save_queue(queue)
-                        append_post({"date": now.strftime("%Y-%m-%d"), "group": g["jid"], "msg_id": msg.get("id"), "slot": msg.get("slot"), "eligible_at": "", "sent_at": "", "age_at_send": "", "message_id": "", "status": "expired", "error": detail})
+                        append_post({"date": now.strftime("%Y-%m-%d"), "group": g["jid"], "utm_source": _group_slug(g), "msg_id": msg.get("id"), "slot": msg.get("slot"), "eligible_at": "", "sent_at": "", "age_at_send": "", "message_id": "", "status": "expired", "error": detail})
                         print(f"[{now:%H:%M:%S}] {g['name']} msg#{msg.get('id')} EXPIRED ({detail})")
                     elif action == "block":
                         msg["status"] = "blocked"
                         save_queue(queue)
-                        append_post({"date": now.strftime("%Y-%m-%d"), "group": g["jid"], "msg_id": msg.get("id"), "slot": msg.get("slot"), "eligible_at": "", "sent_at": "", "age_at_send": "", "message_id": "", "status": "blocked", "error": detail})
+                        append_post({"date": now.strftime("%Y-%m-%d"), "group": g["jid"], "utm_source": _group_slug(g), "msg_id": msg.get("id"), "slot": msg.get("slot"), "eligible_at": "", "sent_at": "", "age_at_send": "", "message_id": "", "status": "blocked", "error": detail})
                         print(f"[{now:%H:%M:%S}] {g['name']} msg#{msg.get('id')} BLOCKED ({detail})")
         except Exception as e:
             print("loop_error", e)
