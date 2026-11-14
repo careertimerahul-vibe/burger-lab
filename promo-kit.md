@@ -34,7 +34,9 @@ Single source of truth for Burger Lab marketing messages. Business facts (links,
 
 ## Style
 
-- **Default language: English — short and simple.** Hinglish only if Rahul explicitly asks for it
+- **English only — always.** Hinglish and typed-Hindi hooks (kit 101–150) stay dormant until Rahul
+  explicitly asks for them for a specific slot or group; no auto-mixing. Every queue message carries
+  `lang: en` until he says otherwise.
 - Short, WhatsApp-punchy, pun-filled
 - Local hooks: evening cravings, weather (hazy/cloudy/rainy/monsoon), weekend mood, student/office crowd
 - Emojis generously — 1 per line minimum, visually scannable
@@ -45,6 +47,32 @@ Single source of truth for Burger Lab marketing messages. Business facts (links,
 
 - **₹130 combo** — "Alu Tikki + Fries + Coke" (Burger Combo): OG Alu Tikki Burger · French Fries · Coke (menu_item id 365, category 🔥 Combos)
 - Full combo list also has ₹180 / ₹220 / ₹240 / ₹270 options — verify against `menu_items` for kitchen_id=5
+
+## Copy source — copywriter kit (added 14 Nov 2026)
+
+`copywriter-kit.md` holds the 100 approved hooks and the 3-part message stack. Use it for the
+WORDS; this file stays the source of FACTS. Where the two disagree, these win:
+
+- **Facts**: links, phone, address, hours and price floors come from here / `config.js`. The kit's
+  rupee figures, percentages and promo codes are examples — ignore any that the live menu
+  (`menu_items`, kitchen_id=5) does not confirm.
+- **Invite link**: the kit says "always include both links" — overridden by `data/groups.json`
+  `allow_group_link`. FOODIES OF GHKW and AGHKW-Advertising are `false`, so those posts carry no
+  `chat.whatsapp.com` line at all; the menu link is the CTA.
+- **Item-agnostic captions**: hooks that name an item (aloo tikki, paneer, "Double Beast") cannot
+  ride a photo, and every current slot has one. Adapt them to generic sensory words —
+  `scripts/group_scheduler.py` blocks item names on photo posts.
+- **Length/emoji for group posts**: kit's 50–85 words, 2–4 emojis replaces "1 emoji per line".
+- **Language**: English only (hooks 1–100). Hinglish/typed-Hindi hooks (101–150) are DORMANT — do not
+  use them unless Rahul explicitly asks for Hinglish on a given day or group. Set `lang: en` on every
+  message. No Devanagari, ever.
+- **Crowd lines** only when the photo actually shows people, a queue or the cart (rule 0 above).
+- **Canonical links**: use `https://theburgerlabnoida.netlify.app/` and `wa.me/919205491224`,
+  not the kit's `#menu` anchor or the `?s=cl&p=a&ilr=4` tracking suffix, so copy stays identical
+  everywhere.
+
+`scripts/apply_copywriter_copy.py` re-cuts an existing queue under these rules (validates word
+count, emoji count, item names, link bans; backs up the queue before writing).
 
 ## Where the facts live
 
