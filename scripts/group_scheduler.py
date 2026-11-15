@@ -24,6 +24,11 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlencode
 
+_HERE = os.path.dirname(os.path.abspath(__file__))
+if _HERE not in sys.path:
+    sys.path.insert(0, _HERE)
+import day_gate  # noqa: E402  (same-dir helper: copy must not claim another weekday)
+
 BASE = os.environ.get("GROUP_POSTER_BASE", "/opt/data/projects/burger-lab")
 DATA = f"{BASE}/data"
 GROUPS = f"{DATA}/groups.json"
@@ -113,9 +118,13 @@ def api(path, payload=None, method=None):
         return 0, {"error": str(e)}
 
 
-def hhmm_today(s):
+def hhmm_today(s, day=None):
+    """Slot string -> datetime on `day` (YYYY-MM-DD), defaulting to today in IST."""
     h, m = [int(x) for x in s.split(":")]
-    return now_ist().replace(hour=h, minute=m, second=0, microsecond=0)
+    base = now_ist()
+    if day:
+        base = base.replace(year=int(day[0:4]), month=int(day[5:7]), day=int(day[8:10]))
+    return base.replace(hour=h, minute=m, second=0, microsecond=0)
 
 
 # ---------- per-group link tagging ----------
@@ -266,7 +275,7 @@ def link_violation(text, group):
 
 def eligible_at(msg, group, today):
     """When this message may post: its slot, its not_before floor, pushed by our spacing rule."""
-    slot = hhmm_today(msg.get("slot") or group["slots"][0])
+    slot = hhmm_today(msg.get("slot") or group["slots"][0], today)
     floor = slot
     nb = msg.get("not_before")
     if nb:
@@ -286,7 +295,7 @@ def evaluate(group, msg, now, dry_run=False):
     today = now.strftime("%Y-%m-%d")
     text = render_text(msg, group, now)
     gate_sec = int(group.get("min_gap_min", 16) * 60)
-    cutoff = hhmm_today(group.get("cutoff", "23:30"))
+    cutoff = hhmm_today(group.get("cutoff", "23:30"), today)
 
     if posts_today(group["jid"], today) >= group.get("max_per_day", 3):
         return "skip", "daily_cap"
@@ -296,7 +305,7 @@ def evaluate(group, msg, now, dry_run=False):
     # expires now instead of holding a "wait" slot. Allowance is our own spacing rule plus a
     # margin, so a normal gate/spacing delay never self-expires.
     max_late = group.get("max_late_min") or (group.get("own_post_spacing_min", 60) + 30)
-    slot_at = hhmm_today(msg.get("slot") or group["slots"][0])
+    slot_at = hhmm_today(msg.get("slot") or group["slots"][0], today)
     late_min = int((now - slot_at).total_seconds() // 60)
     if late_min > max_late:
         return "expire", f"stale_slot(+{late_min}m>max{max_late}m)"
@@ -318,6 +327,12 @@ def evaluate(group, msg, now, dry_run=False):
     lv = link_violation(text, group)
     if lv:
         return "block", lv
+
+    # Copy that says "this Friday" must not go out on a Tuesday: the draft is written by an
+    # agent from a hook bank that still holds day-named hooks (#57). Blocked, never sent late.
+    lock = day_gate.mismatch(text, now)
+    if lock:
+        return "block", f"day_lock={lock}"
 
     if msg.get("image"):
         named = item_names_in(text)

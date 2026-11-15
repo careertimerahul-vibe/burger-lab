@@ -21,6 +21,11 @@ Match the hook category below to the user's input asset, language preference, or
 * **General Evening Cravings / Weekend Engagement (English):** Pull from **Hooks 76–100** (relatable humour & low-friction persuasion).
 * **Local Noida / NCR Conversational Posts (Hinglish & Typed Hindi):** Pull from **Hooks 101–150** for high-relatability residential WhatsApp groups, Reels, and casual evening broadcasts. Keep the body copy in matching Hinglish/typed Hindi (Latin script only, never Devanagari) when using these hooks.
 * **Remix Rule:** Use the hooks verbatim or remix two hooks together so recurring broadcasts stay fresh and unpredictable.
+* **Day Rule (hard):** Never let a message claim today is a specific weekday unless it is. Hooks that name a day —
+  e.g. 57 "…testing in the lab this Friday" — may only run on that day; "this Friday" written on a Tuesday reads as a
+  copy-paste mistake to the whole group. `scripts/day_gate.py` blocks such a queue row before send (`day_lock=friday`)
+  and `sanitize_queue.py` marks it `blocked` when the day's queue is prepared, so draft those slots from day-neutral
+  hooks instead. Evergreen jokes that merely mention a weekday ("Your diet starts on Monday") are fine any day.
 
 ### 3. Message Crafting Formula (The 3-Part Stack)
 Every message you generate must follow this exact structure:
