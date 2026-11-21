@@ -5,6 +5,9 @@ data/*
 # ...but approved copy templates are source, not state: the 23:00 last-orders post
 # is injected from here every night, so losing the file silently kills the post.
 !data/templates/
+# ...and the schedule itself is config, not state: slots, gates, standing messages and
+# skip_slots decide when every post fires. Without it the code runs on no rhythm at all.
+!data/groups.json
 *.session
 wa-session*/
 bot_token.txt

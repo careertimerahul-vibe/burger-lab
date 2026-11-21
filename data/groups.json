@@ -1,0 +1,465 @@
+[
+ {
+  "enabled": true,
+  "slots": [
+   "17:00",
+   "20:00",
+   "21:30",
+   "23:00"
+  ],
+  "min_gap_min": 16,
+  "own_post_spacing_min": 60,
+  "cutoff": "23:59",
+  "max_per_day": 4,
+  "allow_group_link": false,
+  "allow_links": true,
+  "allow_image": true,
+  "hard_gate": true,
+  "content_rules": "burger-lab-promo",
+  "tone": "casual",
+  "jid": "120363425132405603@g.us",
+  "name": "FOODIES OF GHKW",
+  "label": "FOODIES GHKW",
+  "utm_source": "fg",
+  "members": 356,
+  "rule": "Group rule: last message 16 min ago, no WhatsApp group invite link.",
+  "append_invite": false,
+  "note": "Back to 21:30 for the last post (22:00 alias retired 21 Nov) + the shared 23:00 last-orders copy.",
+  "standing_messages": [
+   {
+    "label": "last-orders",
+    "slot": "23:00",
+    "template": "/opt/data/projects/burger-lab/data/templates/bl_last_orders.txt"
+   }
+  ]
+ },
+ {
+  "enabled": true,
+  "slots": [
+   "17:00",
+   "20:00",
+   "21:30",
+   "23:00"
+  ],
+  "min_gap_min": 30,
+  "own_post_spacing_min": 60,
+  "cutoff": "23:59",
+  "max_per_day": 4,
+  "allow_group_link": false,
+  "allow_links": true,
+  "allow_image": true,
+  "hard_gate": true,
+  "content_rules": "burger-lab-promo",
+  "tone": "casual",
+  "jid": "120363407968758497@g.us",
+  "name": "AGHKW-Advertising group(Buy/sell)",
+  "label": "AGHKW Advertising",
+  "utm_source": "ag",
+  "members": 274,
+  "note": "Raised 2 -> 3/day on 2026-11-14; drop back to 2 if members complain.",
+  "rule": "Group rule: last message 30 min ago, no WhatsApp group invite link.",
+  "append_invite": false,
+  "standing_messages": [
+   {
+    "label": "last-orders",
+    "slot": "23:00",
+    "template": "/opt/data/projects/burger-lab/data/templates/bl_last_orders.txt"
+   }
+  ]
+ },
+ {
+  "enabled": true,
+  "slots": [
+   "17:00",
+   "20:00",
+   "21:30",
+   "23:00"
+  ],
+  "min_gap_min": 0,
+  "own_post_spacing_min": 60,
+  "cutoff": "23:59",
+  "max_per_day": 4,
+  "allow_group_link": true,
+  "allow_links": true,
+  "allow_image": true,
+  "hard_gate": false,
+  "content_rules": "burger-lab-promo",
+  "tone": "casual",
+  "jid": "120363426488634095@g.us",
+  "name": "Golf Homes & Kingswood Marketplace",
+  "label": "Golf Homes Marketplace",
+  "utm_source": "gm",
+  "members": 76,
+  "rule": "No group rules known: posts on slot without a quiet gate; links allowed.",
+  "append_invite": true,
+  "standing_messages": [
+   {
+    "label": "last-orders",
+    "slot": "23:00",
+    "template": "/opt/data/projects/burger-lab/data/templates/bl_last_orders.txt"
+   }
+  ]
+ },
+ {
+  "enabled": true,
+  "slots": [
+   "17:00",
+   "20:00",
+   "21:30",
+   "23:00"
+  ],
+  "min_gap_min": 0,
+  "own_post_spacing_min": 60,
+  "cutoff": "23:59",
+  "max_per_day": 4,
+  "allow_group_link": true,
+  "allow_links": true,
+  "allow_image": true,
+  "hard_gate": false,
+  "content_rules": "burger-lab-promo",
+  "tone": "casual",
+  "jid": "120363403319567064@g.us",
+  "name": "Golf homes Bussiness and Advertising premium group",
+  "label": "GHKW Ads Premium",
+  "utm_source": "gp",
+  "members": 120,
+  "rule": "No group rules known: posts on slot without a quiet gate; links allowed.",
+  "append_invite": true,
+  "standing_messages": [
+   {
+    "label": "last-orders",
+    "slot": "23:00",
+    "template": "/opt/data/projects/burger-lab/data/templates/bl_last_orders.txt"
+   }
+  ]
+ },
+ {
+  "enabled": true,
+  "slots": [
+   "17:00",
+   "20:00",
+   "21:30",
+   "23:00"
+  ],
+  "min_gap_min": 0,
+  "own_post_spacing_min": 60,
+  "cutoff": "23:59",
+  "max_per_day": 4,
+  "allow_group_link": true,
+  "allow_links": true,
+  "allow_image": true,
+  "hard_gate": false,
+  "content_rules": "burger-lab-promo",
+  "tone": "casual",
+  "jid": "120363419509333347@g.us",
+  "name": "GOLF HOMES MARKETPLACE COMMUNITY",
+  "label": "GH Marketplace Community",
+  "utm_source": "mc",
+  "members": 284,
+  "rule": "No group rules known: posts on slot without a quiet gate; links allowed.",
+  "append_invite": true,
+  "standing_messages": [
+   {
+    "label": "last-orders",
+    "slot": "23:00",
+    "template": "/opt/data/projects/burger-lab/data/templates/bl_last_orders.txt"
+   }
+  ]
+ },
+ {
+  "enabled": true,
+  "slots": [
+   "17:00",
+   "20:00",
+   "21:30",
+   "23:00"
+  ],
+  "min_gap_min": 0,
+  "own_post_spacing_min": 60,
+  "cutoff": "23:59",
+  "max_per_day": 4,
+  "allow_group_link": true,
+  "allow_links": true,
+  "allow_image": true,
+  "hard_gate": false,
+  "content_rules": "burger-lab-promo",
+  "tone": "casual",
+  "jid": "120363362339933863@g.us",
+  "name": "Amrapali Golf Homes Kingswood ad",
+  "label": "AGH Kingswood Ads",
+  "utm_source": "ka",
+  "members": 293,
+  "rule": "No group rules known: posts on slot without a quiet gate; links allowed.",
+  "append_invite": true,
+  "standing_messages": [
+   {
+    "label": "last-orders",
+    "slot": "23:00",
+    "template": "/opt/data/projects/burger-lab/data/templates/bl_last_orders.txt"
+   }
+  ]
+ },
+ {
+  "enabled": true,
+  "slots": [
+   "17:00",
+   "23:00"
+  ],
+  "min_gap_min": 16,
+  "own_post_spacing_min": 60,
+  "cutoff": "23:59",
+  "max_per_day": 3,
+  "allow_group_link": false,
+  "allow_links": true,
+  "allow_image": true,
+  "hard_gate": true,
+  "content_rules": "burger-lab-promo",
+  "tone": "casual",
+  "jid": "120363424341631003@g.us",
+  "name": "The Burger Lab",
+  "label": "Burger Lab",
+  "utm_source": "bl",
+  "members": 128,
+  "note": "Own group: 17:00 opening copy + 23:00 closing post (injected from data/templates/bl_last_orders.txt). skip_slots holds one-off dates where a slot is suppressed without changing the rhythm.",
+  "rule": "Our own group: no invite link (pointless), normal 16-min courtesy gate.",
+  "append_invite": false,
+  "standing_messages": [
+   {
+    "label": "last-orders",
+    "slot": "23:00",
+    "template": "/opt/data/projects/burger-lab/data/templates/bl_last_orders.txt"
+   }
+  ],
+  "skip_slots": {
+   "17:00": [
+    "2026-11-20"
+   ]
+  }
+ },
+ {
+  "enabled": true,
+  "slots": [
+   "17:00",
+   "20:00",
+   "21:30",
+   "23:00"
+  ],
+  "min_gap_min": 0,
+  "own_post_spacing_min": 60,
+  "cutoff": "23:59",
+  "max_per_day": 4,
+  "allow_group_link": true,
+  "allow_links": true,
+  "allow_image": true,
+  "hard_gate": false,
+  "content_rules": "burger-lab-promo",
+  "tone": "casual",
+  "jid": "120363425842395322@g.us",
+  "name": "🥰Golf homes ...🙏",
+  "label": "Golf Homes",
+  "utm_source": "gh",
+  "members": 92,
+  "note": "Enabled on Rahul's instruction 2026-11-14 (name is opaque; treat as a general Golf Homes chat — drop to 1-2/day if members object).",
+  "rule": "No group rules known: posts on slot without a quiet gate; links allowed.",
+  "append_invite": true,
+  "standing_messages": [
+   {
+    "label": "last-orders",
+    "slot": "23:00",
+    "template": "/opt/data/projects/burger-lab/data/templates/bl_last_orders.txt"
+   }
+  ]
+ },
+ {
+  "enabled": false,
+  "slots": [
+   "17:00",
+   "20:00",
+   "21:30"
+  ],
+  "min_gap_min": 16,
+  "own_post_spacing_min": 60,
+  "cutoff": "23:30",
+  "max_per_day": 3,
+  "allow_group_link": false,
+  "allow_links": true,
+  "allow_image": true,
+  "hard_gate": true,
+  "content_rules": "burger-lab-promo",
+  "tone": "casual",
+  "jid": "120363412816492107@g.us",
+  "name": "AGHKW Kutumbh",
+  "label": "AGHKW Kutumbh",
+  "utm_source": "",
+  "members": 977,
+  "note": "Society/residents group, not a marketplace. Off."
+ },
+ {
+  "enabled": false,
+  "slots": [
+   "17:00",
+   "20:00",
+   "21:30"
+  ],
+  "min_gap_min": 16,
+  "own_post_spacing_min": 60,
+  "cutoff": "23:30",
+  "max_per_day": 3,
+  "allow_group_link": false,
+  "allow_links": true,
+  "allow_image": true,
+  "hard_gate": true,
+  "content_rules": "burger-lab-promo",
+  "tone": "casual",
+  "jid": "120363412038992302@g.us",
+  "name": "AGHKW Kutumbh",
+  "label": "AGHKW Kutumbh",
+  "utm_source": "",
+  "members": 9,
+  "note": "Tiny duplicate of the Kutumbh group. Off."
+ },
+ {
+  "enabled": false,
+  "slots": [
+   "17:00",
+   "20:00",
+   "21:30"
+  ],
+  "min_gap_min": 16,
+  "own_post_spacing_min": 60,
+  "cutoff": "23:30",
+  "max_per_day": 3,
+  "allow_group_link": false,
+  "allow_links": true,
+  "allow_image": true,
+  "hard_gate": true,
+  "content_rules": "burger-lab-promo",
+  "tone": "casual",
+  "jid": "120363411875592516@g.us",
+  "name": "Residents Grievances Help/Support",
+  "label": "Residents Grievances Help/Support",
+  "utm_source": "",
+  "members": 634,
+  "note": "Complaint channel — never post promos here."
+ },
+ {
+  "enabled": false,
+  "slots": [
+   "17:00",
+   "20:00",
+   "21:30"
+  ],
+  "min_gap_min": 16,
+  "own_post_spacing_min": 60,
+  "cutoff": "23:30",
+  "max_per_day": 3,
+  "allow_group_link": false,
+  "allow_links": true,
+  "allow_image": true,
+  "hard_gate": true,
+  "content_rules": "burger-lab-promo",
+  "tone": "casual",
+  "jid": "120363411385291587@g.us",
+  "name": "Block L",
+  "label": "Block L",
+  "utm_source": "",
+  "members": 227,
+  "note": "Society block group. Off."
+ },
+ {
+  "enabled": false,
+  "slots": [
+   "17:00",
+   "20:00",
+   "21:30"
+  ],
+  "min_gap_min": 16,
+  "own_post_spacing_min": 60,
+  "cutoff": "23:30",
+  "max_per_day": 3,
+  "allow_group_link": false,
+  "allow_links": true,
+  "allow_image": true,
+  "hard_gate": true,
+  "content_rules": "burger-lab-promo",
+  "tone": "casual",
+  "jid": "120363422861438350@g.us",
+  "name": "PIZZI PIZZERIA",
+  "label": "PIZZI PIZZERIA",
+  "utm_source": "",
+  "members": 264,
+  "note": "Competitor outlet group. Off."
+ },
+ {
+  "enabled": false,
+  "slots": [
+   "17:00",
+   "20:00",
+   "21:30"
+  ],
+  "min_gap_min": 16,
+  "own_post_spacing_min": 60,
+  "cutoff": "23:30",
+  "max_per_day": 3,
+  "allow_group_link": false,
+  "allow_links": true,
+  "allow_image": true,
+  "hard_gate": true,
+  "content_rules": "burger-lab-promo",
+  "tone": "casual",
+  "jid": "120363429025382942@g.us",
+  "name": "EKAVI✨",
+  "label": "EKAVI✨",
+  "utm_source": "",
+  "members": 57,
+  "note": "Unrelated shop group. Off."
+ },
+ {
+  "enabled": false,
+  "slots": [
+   "17:00",
+   "20:00",
+   "21:30"
+  ],
+  "min_gap_min": 16,
+  "own_post_spacing_min": 60,
+  "cutoff": "23:30",
+  "max_per_day": 3,
+  "allow_group_link": false,
+  "allow_links": true,
+  "allow_image": true,
+  "hard_gate": true,
+  "content_rules": "burger-lab-promo",
+  "tone": "casual",
+  "jid": "120363428007763962@g.us",
+  "name": "laddu gopal dresses and shringar🧿✨",
+  "label": "laddu gopal dresses and shringar🧿✨",
+  "utm_source": "",
+  "members": 49,
+  "note": "Unrelated shop group. Off."
+ },
+ {
+  "enabled": false,
+  "slots": [
+   "17:00",
+   "20:00",
+   "21:30"
+  ],
+  "min_gap_min": 16,
+  "own_post_spacing_min": 60,
+  "cutoff": "23:30",
+  "max_per_day": 3,
+  "allow_group_link": false,
+  "allow_links": true,
+  "allow_image": true,
+  "hard_gate": true,
+  "content_rules": "burger-lab-promo",
+  "tone": "casual",
+  "jid": "120363429871477858@g.us",
+  "name": "The Burger lab bakery order",
+  "label": "The Burger lab bakery order",
+  "utm_source": "",
+  "members": 6,
+  "note": "6-member internal ordering group. Off."
+ }
+]
