@@ -132,6 +132,9 @@ def hhmm_today(s, day=None):
 # swaps {menu_url} / {order_url} for a version stamped with that group's utm_source.
 # That is the only way to tell afterwards which group sent the visit or the WhatsApp chat.
 MENU_BASE = "https://theburgerlabnoida.netlify.app/"
+# Every post states the fulfilment model. Delivery is not offered, so no customer should read a
+# post and expect a rider: the line is appended at render time and the writer never has to add it.
+PICKUP_LINE = "🥡 Pickup only — no delivery"
 INVITE_URL = "https://chat.whatsapp.com/ITnN3ll8cBiIFnEQysWuLu"
 
 
@@ -159,7 +162,13 @@ def render_text(msg, group, when=None):
     # line that still carries it (stale queue copy, old templates) rather than trusting the text.
     kept = [l for l in text.split("\n")
             if "wa.me/919205491224" not in l and "{order_url}" not in l]
-    return "\n".join(kept)
+    text = "\n".join(kept).rstrip()
+
+    # Pickup-only is an operating fact, not a copy decision: every message carries it so no
+    # customer reads a post and expects delivery. Added at render time, never by the writer.
+    if "pickup only" not in text.lower():
+        text = f"{text}\n\n{PICKUP_LINE}"
+    return text
 
 
 def append_post(row):
@@ -193,6 +202,51 @@ def posts_today(group_jid, today):
         return 0
     with open(POSTS, newline="", encoding="utf-8") as fh:
         return sum(1 for r in csv.DictReader(fh) if r.get("group") == group_jid and r.get("date") == today and r.get("status") == "sent")
+
+
+DONE_STATUSES = ("sent", "blocked", "expired")
+
+
+def group_done(group_jid, msg_id, today):
+    """Has this group already reached a terminal outcome for this queue message?
+
+    Delivery is per group, not per message: one broadcast goes to eight groups whose gates
+    clear at different times, so the queue entry stays approved until every target has a
+    terminal row in group_posts.csv.
+    """
+    if not os.path.exists(POSTS):
+        return False
+    with open(POSTS, newline="", encoding="utf-8") as fh:
+        return any(
+            r.get("date") == today and r.get("group") == group_jid
+            and str(r.get("msg_id")) == str(msg_id) and r.get("status") in DONE_STATUSES
+            for r in csv.DictReader(fh))
+
+
+def targets(msg, groups, today=None):
+    """(group, effective slot) pairs a message goes to.
+
+    A broadcast targets every enabled group that runs its slot; a group may run the copy at
+    its own time (foodies takes 21:30 at 22:00 via slot_alias) or skip it entirely. A single
+    date can be suppressed without touching the daily rhythm via skip_slots:
+    {"17:00": ["2026-11-20"]} — the schedule stays intact tomorrow.
+    """
+    today = today or now_ist().strftime("%Y-%m-%d")
+    out = []
+    for g in groups:
+        if msg.get("group") and msg["group"] != g["jid"]:
+            continue
+        slot = msg.get("slot")
+        if not msg.get("group") and slot and g.get("slots"):
+            if slot not in g["slots"]:
+                alias = (g.get("slot_alias") or {}).get(slot)
+                if alias not in g["slots"]:
+                    continue
+                slot = alias
+        if today in ((g.get("skip_slots") or {}).get(slot) or []):
+            continue
+        out.append((g, slot))
+    return out
 
 
 # ---------- core ----------
@@ -453,42 +507,36 @@ def run(dry_run=False):
                 time.sleep(POLL_SEC)
                 continue
             now = now_ist()
-            for g in groups:
-                for msg in queue["messages"]:
-                    if msg.get("status") != "approved":
+            for msg in queue["messages"]:
+                if msg.get("status") != "approved":
+                    continue
+                pair = targets(msg, groups, today)
+                if not pair:
+                    msg["status"] = "done"  # no enabled group runs this slot
+                    save_queue(queue)
+                    continue
+                for g, slot in pair:
+                    # Delivery is per group: a message stays approved until every target has
+                    # a terminal row, so a block in one group cannot silence the others.
+                    if group_done(g["jid"], msg.get("id"), today):
                         continue
-                    if msg.get("group") and msg["group"] != g["jid"]:
-                        continue
-                    # A broadcast belongs to a slot. A group may run it at its own time
-                    # (foodies takes the 21:30 copy at 22:00 via slot_alias); if it neither
-                    # runs the slot nor aliases it, it is not a target.
-                    if not msg.get("group") and msg.get("slot") and g.get("slots"):
-                        if msg["slot"] not in g["slots"]:
-                            alias = (g.get("slot_alias") or {}).get(msg["slot"])
-                            if alias in g["slots"]:
-                                msg = dict(msg, slot=alias)
-                            else:
-                                continue
-                    action, detail = evaluate(g, msg, now, dry_run)
+                    eff = msg if slot == msg.get("slot") else dict(msg, slot=slot)
+                    action, detail = evaluate(g, eff, now, dry_run)
                     if action == "send":
-                        code, res = do_send(g, msg, dry_run)
+                        code, res = do_send(g, eff, dry_run)
                         print(f"[{now:%H:%M:%S}] {g['name']} msg#{msg.get('id')} SEND -> {code} {res.get('message_id') or res.get('error')} ({detail})")
                         if code == 200 and not dry_run:
-                            msg["status"] = "sent"
-                            msg["message_id"] = res.get("message_id")
-                            save_queue(queue)
-                        elif code == 409:
-                            msg["status"] = "approved"  # gate closed in between; retry next tick
-                    elif action == "expire" and msg.get("status") == "approved":
-                        msg["status"] = "expired"
-                        save_queue(queue)
-                        append_post({"date": now.strftime("%Y-%m-%d"), "group": g["jid"], "utm_source": _group_slug(g), "msg_id": msg.get("id"), "slot": msg.get("slot"), "eligible_at": "", "sent_at": "", "age_at_send": "", "message_id": "", "status": "expired", "error": detail})
+                            msg.setdefault("message_id", res.get("message_id"))
+                    elif action == "expire":
+                        append_post({"date": today, "group": g["jid"], "utm_source": _group_slug(g), "msg_id": msg.get("id"), "slot": slot, "eligible_at": "", "sent_at": "", "age_at_send": "", "message_id": "", "status": "expired", "error": detail})
                         print(f"[{now:%H:%M:%S}] {g['name']} msg#{msg.get('id')} EXPIRED ({detail})")
                     elif action == "block":
-                        msg["status"] = "blocked"
-                        save_queue(queue)
-                        append_post({"date": now.strftime("%Y-%m-%d"), "group": g["jid"], "utm_source": _group_slug(g), "msg_id": msg.get("id"), "slot": msg.get("slot"), "eligible_at": "", "sent_at": "", "age_at_send": "", "message_id": "", "status": "blocked", "error": detail})
+                        append_post({"date": today, "group": g["jid"], "utm_source": _group_slug(g), "msg_id": msg.get("id"), "slot": slot, "eligible_at": "", "sent_at": "", "age_at_send": "", "message_id": "", "status": "blocked", "error": detail})
                         print(f"[{now:%H:%M:%S}] {g['name']} msg#{msg.get('id')} BLOCKED ({detail})")
+                if all(group_done(gg["jid"], msg.get("id"), today) for gg, _ in pair):
+                    msg["status"] = "done"
+                    save_queue(queue)
+                    print(f"[{now:%H:%M:%S}] msg#{msg.get('id')} done — all {len(pair)} group(s) terminal", flush=True)
         except Exception as e:
             print("loop_error", e)
         time.sleep(POLL_SEC)
@@ -506,14 +554,13 @@ def status():
         print(f"  gate: need >={int(g.get('min_gap_min',16)*60)}s quiet | current age: {age}s | last: {(st.get('last_text') or '')[:50]}")
         print(f"  posts today: {posts_today(g['jid'], now.strftime('%Y-%m-%d'))}/{g.get('max_per_day',3)} | cutoff {g.get('cutoff','23:30')}")
         for m in queue.get("messages", []):
-            if m.get("group") and m["group"] != g["jid"]:
+            # One source of truth for who gets what, including slot shifts and one-off skips.
+            pair = targets(m, [g], now.strftime("%Y-%m-%d"))
+            if not pair:
                 continue
-            if not m.get("group") and m.get("slot") and g.get("slots") and m["slot"] not in g["slots"]:
-                alias = (g.get("slot_alias") or {}).get(m["slot"])
-                if alias in g["slots"]:
-                    m = dict(m, slot=alias)
-                else:
-                    continue  # broadcast for a slot this group does not run
+            slot = pair[0][1]
+            if slot != m.get("slot"):
+                m = dict(m, slot=slot)
             act, detail = evaluate(g, m, now)
             print(f"   #{m.get('id')} slot {m.get('slot')} [{m.get('status')}] -> {act} ({detail})")
             print(f"      {(m.get('text') or '')[:90]}...")

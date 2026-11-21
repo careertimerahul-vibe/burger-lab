@@ -6,7 +6,8 @@ Single source of truth for Burger Lab marketing messages. Business facts (links,
 
 - **Brand:** 100% vegetarian, air-fried, late-evening food cart at Amrapali Golf Homes
 - **Menu link (USE THIS in messages):** `https://theburgerlabnoida.netlify.app/` — the native landing page
-- **WhatsApp orders phone:** `9205491224` → `wa.me/919205491224` (always 91 prefix; bare 10-digit numbers misroute)
+- **WhatsApp orders phone:** `9205491224` (always 91 prefix; bare 10-digit numbers misroute). Not linked in posts any more — the site takes the order, and posts carry one `Menu & Order` link only.
+- **Fulfilment: pickup only — no delivery.** Every post ends with `🥡 Pickup only — no delivery`, appended by the scheduler (`PICKUP_LINE` in `scripts/group_scheduler.py`); never write or vary it in copy, and never promise a rider.
 - **WhatsApp group invite:** `https://chat.whatsapp.com/ITnN3ll8cBiIFnEQysWuLu`
 - **Address (marketing):** Near Entry Gate No. 3, Beside Vegetable Shop, Amrapali Golf Homes Market, Sector 4, Greater Noida
 - **Address (shop unit, config.js):** Shop C-29, Amrapali Golf Homes Market, Haibatpur, Sector 4, Greater Noida, UP 201016

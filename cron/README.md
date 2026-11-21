@@ -23,11 +23,17 @@
   group that runs that slot — the scheduler filters by each group's `slots`, so a group with
   a different rhythm simply does not receive it. Do not fork the copy per group; the only
   per-group difference is the link tag, applied at send time.
-- **The burger cart's own group is two posts a day.** `bl` runs 17:00 (shared opening copy)
-  and 22:00 (fixed "last orders" post). That post is injected every
-  day by `ensure_standing()` from `data/templates/bl_last_orders.txt` — the copy is never
-  re-typed by the drafting model, and never paraphrased. `standing_messages` in groups.json
-  is the hook; add an entry there for any future fixed daily post.
+- **The burger cart's own group runs 17:00 + 22:00.** The 22:00 post is fixed: injected every
+  day by `ensure_standing()` from `data/templates/bl_last_orders.txt` — never re-typed by the
+  drafting model, never paraphrased. `standing_messages` in groups.json is the hook; add an
+  entry there for any future fixed daily post.
+- **One-off skips never touch the rhythm.** To suppress a slot for a single date, add it to
+  that group's `skip_slots` — `{"17:00": ["2026-11-20"]}` sends seven groups today and eight
+  tomorrow. Never edit `slots` for a single day; that is what made a one-day skip permanent.
+- **Pickup only, in every message.** `render_text()` appends `🥡 Pickup only — no delivery`
+  (`PICKUP_LINE`) after the copy, so the fulfilment model is stated even on hand-written or
+  template messages. It is skipped if the copy already says "pickup only", and the writer
+  never adds it — drafts budget 45-70 words to leave room.
 - **No clock times in the copy.** One text lands at 21:30 in six groups and 22:00 in
   foodies, so a line like "9:30 PM" or "last 30 minutes" is wrong somewhere. Drafts say
   "tonight" / "before we close"; only the address line states opening hours.
@@ -58,6 +64,21 @@
   both true — i.e. the five open groups. Shared copy stays identical everywhere else, so
   group performance is still comparable.
 - `data/group_posts.csv` logs `utm_source` per send, so every post is traceable to a group.
+
+## Menu opens (what the group links actually produce)
+
+The landing page logs one row per load with the group's UTM attached, so opens are measurable
+without any third-party analytics:
+
+- `index.html` fires a single `fetch("/api/visit", {source, content, ref, ua})` per session
+  (guarded by `sessionStorage`, `keepalive` so it survives a tap-through). Added 21 Nov 2026.
+- `api/server.py`: `POST /api/visit` inserts into `visits` (`ts, path, source, content, ref, ua`);
+  `GET /api/visits?days=N` reads them back. Table is created on boot — `init_db()`.
+- The Netlify function proxies `/api/*` with the bearer, so the browser needs no key.
+- Report: `/opt/data/venvs/burgerlab/bin/python scripts/visit_report.py --days 7` — opens by
+  group, by hour (IST), by day, and per slot against how many groups received that slot.
+- Direct opens (staff, bookmarks) arrive with `source=""` and are listed as `(direct)`; they are
+  not group traffic and should not be read as reach.
 - `gh` = 🥰Golf homes (92) — a general Golf Homes chat, enabled 2026-11-14 on instruction.
 - The landing page has **no analytics** yet: the UTMs are in the links but nothing reads them.
   Click attribution today comes from the WhatsApp prefill.
