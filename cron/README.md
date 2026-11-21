@@ -15,18 +15,19 @@
   promoted to `approved` on the next scheduler tick. Delete the flag (or set it false) to
   restore approve-by-numbers.
 
-- **One schedule, one copy, per-group timing.** Three slots (17:00 / 20:00 / 21:30 IST,
-  `max_per_day: 3`) are drafted as one shared copy. A group may run a different set:
-  `slots` says what times it posts, `slot_alias` maps a shared slot onto its own time
-  (foodies takes the 21:30 copy at **22:00**, so its night is not cut off early).
+- **One schedule, one copy, per-group timing.** Three drafted slots (17:00 / 20:00 / 21:30 IST)
+  plus the fixed 23:00 last-orders copy, `max_per_day: 4`. `slots` says what times a group
+  posts; the 21:30 copy now lands at 21:30 everywhere — foodies' 22:00 `slot_alias` was retired
+  on 21 Nov when it went back to 21:30 plus the shared 23:00 close.
 - **One copy, broadcast.** A queue message with `"group": null` is sent to every enabled
   group that runs that slot — the scheduler filters by each group's `slots`, so a group with
   a different rhythm simply does not receive it. Do not fork the copy per group; the only
   per-group difference is the link tag, applied at send time.
-- **The burger cart's own group runs 17:00 + 22:00.** The 22:00 post is fixed: injected every
-  day by `ensure_standing()` from `data/templates/bl_last_orders.txt` — never re-typed by the
-  drafting model, never paraphrased. `standing_messages` in groups.json is the hook; add an
-  entry there for any future fixed daily post.
+- **23:00 last-orders goes to every group, and it is fixed copy.** Injected every day by
+  `ensure_standing()` from `data/templates/bl_last_orders.txt` — never re-typed by the drafting
+  model, never paraphrased. `standing_messages` in groups.json is the hook (all eight enabled
+  groups carry a `23:00` entry); add one there for any future fixed daily post. The cart's own
+  group runs **17:00 + that same 23:00 close** and nothing in between.
 - **One-off skips never touch the rhythm.** To suppress a slot for a single date, add it to
   that group's `skip_slots` — `{"17:00": ["2026-11-20"]}` sends seven groups today and eight
   tomorrow. Never edit `slots` for a single day; that is what made a one-day skip permanent.
@@ -34,9 +35,10 @@
   (`PICKUP_LINE`) after the copy, so the fulfilment model is stated even on hand-written or
   template messages. It is skipped if the copy already says "pickup only", and the writer
   never adds it — drafts budget 45-70 words to leave room.
-- **No clock times in the copy.** One text lands at 21:30 in six groups and 22:00 in
-  foodies, so a line like "9:30 PM" or "last 30 minutes" is wrong somewhere. Drafts say
-  "tonight" / "before we close"; only the address line states opening hours.
+- **No clock times in the drafted copy.** One text lands at 17:00, 20:00 or 21:30 depending on
+  the slot, so a line like "9:30 PM" is wrong somewhere. Drafts say "tonight" / "before we
+  close"; only the address line states opening hours. The 23:00 template may say "last 60
+  minutes" because it always posts at 23:00 against a midnight close.
 - **One link per post, labelled `Menu & Order`.** The site shows the menu and takes the
   order, so one URL does both: drafts write `🍔 Menu & Order: {menu_url}` and nothing else.
   The scheduler renders it per group as `…netlify.app/?utm_source=<code>&utm_content=<HHMM>`

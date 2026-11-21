@@ -1,4 +1,4 @@
 Last 60 minutes on the grill—we're taking the final orders of the night before we shut down the Lab. ⏳
 If you're still debating dinner or craving a late-evening hit of thick, juicy burgers, stuffed sandwiches, and crispy fries, this is your window.
 
-🍔 Menu & Order: https://theburgerlabnoida.netlify.app/#menu
+🍔 Menu & Order: {menu_url}

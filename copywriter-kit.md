@@ -205,6 +205,30 @@ Every message you generate must follow this exact structure:
 
 ---
 
+### Rahul's Approved Hooks (verbatim, added 21 Nov 2026)
+
+Written by Rahul — use the wording as-is, not "remixed". Both are English, so they sit outside
+the dormant 101-150 Hinglish range. **No links in these hooks**: the scheduler renders the single
+`🍔 Menu & Order` link, appends the VIP invite only where a group allows it, and adds the
+pickup line, so a hardcoded link duplicates what the renderer already does.
+
+151. Burgers that good, people are starting to call the pictures AI 😂. Zero prompts needed—just
+     thick, crispy patties, molten cheese, and 10+ house-made sauces stacked fresh off the grill.
+     Come taste the real thing at Gate 3.
+     *Safe for every group: no group link, no delivery claim, no clock time.*
+
+152. Burgers that good, people are starting to call the pictures AI 😂. Zero prompts needed—just
+     thick, crispy patties, molten cheese, and 10+ house-made sauces stacked fresh off the grill.
+     Come taste the real thing at Gate 3, and jump into our VIP group for secret offers.
+     *Marketplace groups only (gm/gp/mc/ka/gh). Never on fg, ag or bl — those three ban group
+     links outright, so naming the group there is worse than an invite the scheduler withholds.*
+
+Two edits to Rahul's original text, both deliberate: "free deliveries" is dropped (the cart is
+pickup-only — see promo-kit), and the three links are dropped (the renderer adds menu, invite and
+pickup line per group).
+
+---
+
 ## Group Chat
 
 * **VIP WhatsApp Group Link:** https://chat.whatsapp.com/ITnN3ll8cBiIFnEQysWuLu?s=cl&p=a&ilr=4
