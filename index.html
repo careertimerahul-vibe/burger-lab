@@ -1028,5 +1028,27 @@ var Checkout = {
 
 })();
 </script>
+<script>
+/* Menu-open tracking. Group posts carry ?utm_source=<group>&utm_content=<slot>; this logs one
+   visit per page load so a slot's opens are visible without any third-party analytics. */
+(function () {
+  try {
+    var q = new URLSearchParams(location.search);
+    var src = q.get("utm_source") || "", con = q.get("utm_content") || "";
+    var key = src + "|" + con;
+    if (sessionStorage.getItem("bl_visit") === key) return;
+    sessionStorage.setItem("bl_visit", key);
+    fetch("/api/visit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        path: location.pathname, source: src, content: con,
+        ref: document.referrer || "", ua: navigator.userAgent
+      }),
+      keepalive: true
+    }).catch(function () {});
+  } catch (e) {}
+})();
+</script>
 </body>
 </html>
