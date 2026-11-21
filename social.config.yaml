@@ -1,0 +1,54 @@
+# Burger Lab — social publishing config (Instagram + WhatsApp groups)
+# Contract: /opt/data/projects/social-media/README.md   Playbooks: .../instagram, .../whatsapp
+# Brand facts (prices, hours, phone) are NOT duplicated here — they live in promo-kit.md.
+
+project: burger-lab
+timezone: Asia/Kolkata
+
+approvals:
+  require_human: true
+  via: telegram
+
+brand:
+  voice: /opt/data/projects/burger-lab/copywriter-kit.md
+  facts: /opt/data/projects/burger-lab/promo-kit.md
+  hashtags: /opt/data/projects/burger-lab/instagram-setup.md
+  content_plan: /opt/data/projects/burger-lab/instagram-setup.md
+
+media:
+  local_dir: /opt/data/projects/burger-lab/data/social/media
+  public_base_url: https://theburgerlabnoida.netlify.app/social/   # IG cURLs this; must be public
+  queue_dir: /opt/data/projects/burger-lab/data/social/queue
+  ledger: /opt/data/projects/burger-lab/data/social/ledger.json
+
+channels:
+  instagram:
+    enabled: true
+    handle: t_burger_lab
+    account_type: creator            # confirmed by Rahul 21 Nov 2026
+    api: instagram_login
+    token_file: /opt/data/.secrets/instagram/t_burger_lab.json
+    formats: [image, carousel, reel, story]
+    cadence:
+      reels_per_week: 3
+      carousels_per_week: 1
+      images_per_week: 1
+      stories_per_day: 3
+    post_windows: ["18:00-20:00", "20:00-23:00"]   # IST
+    max_posts_per_day: 3
+    hashtags_max: 12
+    location_tag: "Amrapali Golf Homes, Greater Noida"
+  whatsapp:
+    enabled: true
+    implementation: existing_bridge
+    bridge_url: http://127.0.0.1:8631
+    groups_file: /opt/data/projects/burger-lab/data/groups.json
+    scheduler: /opt/data/projects/burger-lab/scripts/group_scheduler.py
+    max_posts_per_day: 3
+    cutoff: "23:30"
+
+guards:
+  dry_run_default: true
+  verify_after_publish: true
+  banned_terms: [non-veg, nonveg, chicken, mutton, beef, egg, pork]
+  fail_closed: true

@@ -25,6 +25,7 @@
 ## Important Paths
 - Project root: /opt/data/projects/burger-lab
 - Promo kit & message drafting rules: /opt/data/projects/burger-lab/promo-kit.md
+- Social publishing config (Instagram t_burger_lab + WhatsApp groups): /opt/data/projects/burger-lab/social.config.yaml — contract in /opt/data/projects/social-media/README.md
 - Cron docs: /opt/data/projects/burger-lab/cron
 - WhatsApp script: /opt/data/projects/burger-lab/scripts/whatsapp_messages.py
 - Digital presence docs: README.md and related setup docs in root
@@ -34,6 +35,36 @@
 - For cron/script edits, run the script or a safe dry run where possible.
 - Watchdog tests: `python3 -m unittest discover -s scripts/tests -p "test_*.py"`.
 - This project may be a separate git repo/submodule; commit from inside the project root if needed.
+
+## POS app — backend & analytics
+
+`pos/` is the cart-side POS (Netlify site `theburgerlabnoida`). Its data path, in order:
+
+    browser /api/* → netlify/functions/api.js → https://foodcourt.superllm.cloud/burgerlab-api
+    → bridge route in amrapali-food-app backend/api.py → supervisor `burgerlab-api` :8901
+    → own PG cluster :5433 (data dir /opt/data/pgdata-pos, db burgerlab_pos)
+
+- The old setup (Postgres on Rahul's PC behind a throwaway trycloudflare tunnel) is what produced
+  the multi-day 502s. Both halves now run on this box under supervisor (`burgerlab-pg`, priority 20;
+  `burgerlab-api`, priority 30); supervisord itself is revived by the AGH keepalive cron.
+- The `/burgerlab-api` prefix exists because the shared tunnel has no spare DNS slot we can create.
+  An ingress rule for `pos.superllm.cloud` is already staged in `/opt/data/home/.cloudflared/config.yml`;
+  it goes live on the next restart of the root-owned tunnel, at which point set Netlify env
+  `BURGERLAB_API_URL=https://pos.superllm.cloud` and the bridge stops being used. No code change.
+- Analytics lives in `pos/analytics.js` (tab `📊 Analytics`): KPIs vs previous period, revenue trend,
+  peak hours, weekday split, top/thinnest items, category + source/delivery/spice mix, CSV export.
+  All bucketing is Asia/Kolkata on purpose — never switch it to viewer-local time.
+- Costs are empty until cost prices are entered in the Costs tab, so margin reads 100% or "—" and
+  the dashboard shows a costing-gap warning. That is missing data, not a bug.
+
+Verify:
+```bash
+/opt/data/venvs/supervisor/bin/supervisorctl -c /opt/data/supervisor/supervisord.conf status
+curl -s -H 'Authorization: Bearer burgerlab_pos_2024' http://127.0.0.1:8901/api/orders
+curl -s -H 'Authorization: Bearer burgerlab_pos_2024' https://theburgerlabnoida.netlify.app/api/orders
+```
+DB backup: cron `09e30595d19d` (02:00 IST daily) → `/opt/data/backups/burgerlab`, 14-day retention,
+script `/opt/data/scripts/burgerlab_pg_backup.sh`.
 
 ## Monitoring (do not weaken)
 - The group poster is watched by two layers — `scripts/keepalive_group_bot.py` (heals
